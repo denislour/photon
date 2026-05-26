@@ -24,6 +24,7 @@ impl IntoResponse for AppError {
             AppError::MissingFile => (StatusCode::BAD_REQUEST, "missing file".into()),
             AppError::Internal(e) => {
                 worker::console_log!("[BE ERROR] {}", e);
+                tracing::error!(error = %e, "internal error");
                 (StatusCode::INTERNAL_SERVER_ERROR, format!("internal: {e}"))
             }
         };
