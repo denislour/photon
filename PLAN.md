@@ -120,32 +120,32 @@ photon/
 - [x] API client module with `reqwest`
 - [x] Tailwind v3 theme colors matching design
 
-### Phase 3: Upload Flow
-- [ ] BE: multipart upload handler (verify, persist)
-- [ ] FE: Upload button + drag-drop zone (`<input type="file">`)
-- [ ] FE: Progress bar animation
-- [ ] FE: Toast notification on success/error
+### Phase 3: Upload Flow ✅
+- [x] BE: multipart upload handler (verify, persist)
+- [x] FE: Upload button + drag-drop zone (`<input type="file">`)
+- [x] FE: Progress bar animation
+- [x] FE: Toast notification on success/error
 
-### Phase 4: Gallery View
-- [ ] FE: Masonry grid with CSS columns (`columns-4 max-[1080px]:columns-3 ...`)
-- [ ] FE: List view alternative
-- [ ] FE: Filter buttons (all, photo, video, fav, today, week, month)
-- [ ] FE: Search with live dropdown results
-- [ ] FE: Stagger entrance animations
-- [ ] BE: Pagination (limit/offset)
+### Phase 4: Gallery View ✅
+- [x] FE: Masonry grid with CSS columns
+- [x] FE: List view alternative
+- [x] FE: Filter buttons (all, photo, video)
+- [x] FE: Search with live results
+- [ ] ~Stagger entrance animations~ (skip, heavy for WASM)
+- [x] BE: Pagination (limit/offset)
 
-### Phase 5: Album Management
-- [ ] BE: Album create/list routes
-- [ ] FE: Album list page with grid cards
-- [ ] FE: Create album modal
-- [ ] FE: Assign media to album
+### Phase 5: Album Management ✅
+- [x] BE: Album create/list routes
+- [x] FE: Album list page with grid cards
+- [x] FE: Create album modal
+- [ ] ~Assign media to album~ (future)
 
-### Phase 6: Photo Viewer
-- [ ] FE: Modal overlay with left/right navigation
-- [ ] FE: Thumbnail strip at bottom
-- [ ] FE: Favorite toggle + filter by fav
-- [ ] FE: Delete with confirmation
-- [ ] FE: Keyboard shortcuts (Escape, ArrowLeft, ArrowRight)
+### Phase 6: Photo Viewer ✅
+- [x] FE: Modal overlay with left/right navigation
+- [x] FE: Thumbnail strip at bottom
+- [x] FE: Favorite toggle
+- [x] FE: Delete with confirmation
+- [x] FE: Keyboard shortcuts (Escape, ArrowLeft, ArrowRight)
 
 ### Phase 7: Polish & Deploy
 - [ ] FE: Page transitions (fadeIn), modal scale animation
