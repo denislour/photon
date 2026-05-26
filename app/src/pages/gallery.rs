@@ -159,7 +159,7 @@ pub fn GalleryPage() -> impl IntoView {
                 }
             }}
 
-            <PhotoModal items=media.items().get() index=selected />
+            <PhotoModal items=media.items().get_untracked() index=selected />
         </div>
     }
 }
