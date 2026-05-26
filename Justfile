@@ -1,3 +1,5 @@
+set shell := ["bash", "-c"]
+
 dev:
     @echo "=== Photon Dev Server ==="
     @echo "Pre-building BE (WASM debug)..."
