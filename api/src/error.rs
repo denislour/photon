@@ -23,8 +23,8 @@ impl IntoResponse for AppError {
             AppError::NotFound => (StatusCode::NOT_FOUND, "not found".into()),
             AppError::MissingFile => (StatusCode::BAD_REQUEST, "missing file".into()),
             AppError::Internal(e) => {
-                tracing::error!(error = %e);
-                (StatusCode::INTERNAL_SERVER_ERROR, "internal error".into())
+                worker::console_log!("[BE ERROR] {}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, format!("internal: {e}"))
             }
         };
         (status, Json(serde_json::json!({"error": msg}))).into_response()

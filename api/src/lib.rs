@@ -31,9 +31,11 @@ unsafe impl Sync for Storage {}
 
 #[event(fetch)]
 async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> Result<http::Response<axum::body::Body>> {
+    worker::console_log!("[BE] init start");
     let database = env.d1("DB")?;
     let bucket = env.bucket("MEDIA_BUCKET")?;
     db::init(&database).await?;
+    worker::console_log!("[BE] init complete");
 
     let state = AppState {
         db: Db(Arc::new(database)),
