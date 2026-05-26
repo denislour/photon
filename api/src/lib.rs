@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use axum::{Router, routing::{get, post, delete}};
+use tower_http::cors::CorsLayer;
 use tower_service::Service;
 use worker::*;
 
@@ -39,6 +40,8 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> Result<http::Respon
         storage: Storage(Arc::new(bucket)),
     };
 
+    let cors = CorsLayer::permissive();
+
     let mut app = Router::new()
         .route("/api/media", post(media::route::upload))
         .route("/api/media", get(media::route::list))
@@ -48,6 +51,7 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> Result<http::Respon
         .route("/api/albums", get(albums::route::list))
         .route("/api/albums/{id}", get(albums::route::get))
         .route("/api/search", get(search::route::search))
+        .layer(cors)
         .with_state(state);
 
     Ok(app.call(req).await?)
