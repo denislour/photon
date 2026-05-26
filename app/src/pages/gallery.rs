@@ -162,9 +162,12 @@ pub fn GalleryPage() -> impl IntoView {
                                         <div class="flex items-center gap-3 p-2 rounded-sm cursor-pointer \
                                                     bg-surf border border-hl transition-all hover:border-hl2"
                                             on:click=move |_| selected.set(Some(gi))>
-                                            <div class="w-12 h-12 shrink-0 bg-navy/30 rounded flex items-center justify-center">
-                                                <span class="opacity-40"
-                                                    inner_html={if item.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }} />
+                                            <div class="w-12 h-12 shrink-0 bg-navy/30 rounded flex items-center justify-center overflow-hidden">
+                                                {if item.mime_type.starts_with("video") {
+                                                    view! { <span class="opacity-40" inner_html=icons::PLAY /> }.into_any()
+                                                } else {
+                                                    view! { <img src=api::media_url(&item.id) alt="" class="w-full h-full object-cover" /> }.into_any()
+                                                }}
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="text-sm font-medium text-ink truncate">{item.original_name.clone()}</div>
