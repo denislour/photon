@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 
 mod app;
 mod components;
+mod i18n;
 mod pages;
 mod stores;
 mod utils;

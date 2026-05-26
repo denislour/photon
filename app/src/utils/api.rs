@@ -43,6 +43,7 @@ struct CreateAlbumBody {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct UploadResponse {
     pub id: String,
     pub url: String,

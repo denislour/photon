@@ -2,6 +2,7 @@ use gloo_timers::future::TimeoutFuture;
 use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 
+use crate::i18n::*;
 use crate::utils::api;
 
 #[allow(non_snake_case)]
@@ -26,7 +27,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                     up.set(false);
                     ou.set(true);
                     if let Some(msg) = t {
-                        msg.set("Da tai len".into());
+                        msg.set(tr(I18nKey::UploadSuccess).into());
                         TimeoutFuture::new(3000).await;
                         msg.set(String::new());
                     }
@@ -34,7 +35,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                 Err(e) => {
                     up.set(false);
                     if let Some(msg) = t {
-                        msg.set(format!("Loi: {e}"));
+                        msg.set(format!("{}: {e}", tr(I18nKey::UploadError)));
                         TimeoutFuture::new(4000).await;
                         msg.set(String::new());
                     }
@@ -64,13 +65,13 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                 </svg>
             </span>
             <div class="flex-1 min-w-[170px]">
-                <h3 class="text-sm font-normal text-ink">"Keo tha anh, video vao day"</h3>
-                <p class="text-xs text-mute mt-0.5">"JPEG . PNG . WebP . MP4 . Toi da 100MB"</p>
+                <h3 class="text-sm font-normal text-ink">{tr(I18nKey::UploadHint)}</h3>
+                <p class="text-xs text-mute mt-0.5">{tr(I18nKey::UploadFormats)}</p>
             </div>
             <label class="inline-flex items-center gap-1.5 h-8 px-4 rounded-sm \
                           text-xs font-medium bg-gold text-navy \
                           hover:bg-gold/80 transition-all cursor-pointer">
-                "Chon file"
+                {tr(I18nKey::UploadButton)}
                 <input type="file"
                     accept="image/*,video/*"
                     on:change=on_change
@@ -85,7 +86,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                                  style:width=format!("{}%", progress.get())></div>
                         </div>
                         <div class="flex justify-between text-[11px] text-mute mt-1">
-                            <span>"Dang tai..."</span>
+                            <span>{tr(I18nKey::UploadProgress)}</span>
                             <span>{move || format!("{}%", progress.get())}</span>
                         </div>
                     </div>
