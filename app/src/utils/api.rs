@@ -1,5 +1,8 @@
+use js_sys::Uint8Array;
 use reqwest::multipart::{Form, Part};
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::JsFuture;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MediaItem {
@@ -65,13 +68,17 @@ pub async fn fetch_media() -> Result<Vec<MediaItem>, String> {
 }
 
 pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> {
-    let blob: web_sys::Blob = file.clone().into();
-    let buf = js_sys::Uint8Array::new(&blob);
-    let bytes = buf.to_vec();
+    let file_name = file.name();
+    let file_mime = file.type_();
+
+    let blob: web_sys::Blob = file.unchecked_into();
+    let buf = JsFuture::from(blob.array_buffer()).await.map_err(|e| format!("{:?}", e))?;
+    let arr = Uint8Array::new(&buf);
+    let bytes = arr.to_vec();
 
     let part = Part::bytes(bytes)
-        .file_name(file.name())
-        .mime_str(&file.type_())
+        .file_name(file_name)
+        .mime_str(&file_mime)
         .map_err(|e| e.to_string())?;
 
     let form = Form::new().part("file", part);
