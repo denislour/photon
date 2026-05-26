@@ -72,7 +72,7 @@ pub fn AlbumsPage() -> impl IntoView {
                                 </svg>
                             </div>
                             <div class="text-sm font-semibold text-ink">{album.name}</div>
-                            <div class="text-[11px] text-body/70 mt-0.5">"Album"</div>
+                            <div class="text-[11px] text-body/70 mt-0.5">{tr(I18nKey::AlbumLabel)}</div>
                         </div>
                     }
                 }).collect::<Vec<_>>()}
