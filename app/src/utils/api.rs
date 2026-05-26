@@ -13,34 +13,6 @@ pub fn media_url(id: &str) -> String {
     }
 }
 
-/// Log to both browser console AND BE terminal (via /api/log)
-pub fn fe_log(msg: &str) {
-    web_sys::console::log_1(&JsValue::from(msg));
-    // Fire-and-forget POST to BE (ignores errors)
-    let url = api_url("/api/log");
-    let body = serde_json::json!({"msg": msg});
-    wasm_bindgen_futures::spawn_local(async move {
-        let _ = reqwest::Client::new()
-            .post(&url)
-            .json(&body)
-            .send()
-            .await;
-    });
-}
-
-/// In dev mode (trunk serve), the API is on a different port.
-/// In production (single worker), it's on the same origin.
-fn api_url(path: &str) -> String {
-    let loc = web_sys::window().unwrap().location();
-    let host = loc.host().unwrap_or_default();
-    // If running on trunk serve port (3000), redirect API to wrangler port (8000)
-    if host.ends_with(":3000") || host.ends_with(":3000/") {
-        format!("http://localhost:8000{path}")
-    } else {
-        path.to_string()
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MediaItem {
     pub id: String,
@@ -109,7 +81,6 @@ pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> 
     let file_name = file.name();
     let file_mime = file.type_();
     let url = api_url("/api/media");
-    fe_log(&format!("[API] upload: {file_name} ({file_mime}) -> {url}"));
 
     let form_data = web_sys::FormData::new().map_err(|e| format!("FormData error: {:?}", e))?;
     form_data.append_with_blob("file", &file).map_err(|e| format!("append error: {:?}", e))?;
@@ -126,14 +97,12 @@ pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> 
         .map_err(|e| format!("fetch error: {:?}", e))?;
     let resp = resp.unchecked_into::<web_sys::Response>();
     let status = resp.status();
-    fe_log(&format!("[API] response status: {status}"));
 
     if status != 201 {
         let text_promise = resp.text().map_err(|e| format!("text error: {:?}", e))?;
         let text = JsFuture::from(text_promise).await
             .map_err(|e| format!("text await error: {:?}", e))?;
         let text = text.as_string().unwrap_or_default();
-        fe_log(&format!("[API] error body: {text}"));
         return Err(text);
     }
 
@@ -184,4 +153,14 @@ pub async fn create_album(name: &str, description: Option<String>) -> Result<Alb
 
     let body: AlbumCreateResponse = resp.json().await.map_err(|e| e.to_string())?;
     Ok(body.album)
+}
+
+fn api_url(path: &str) -> String {
+    let loc = web_sys::window().unwrap().location();
+    let host = loc.host().unwrap_or_default();
+    if host.ends_with(":3000") || host.ends_with(":3000/") {
+        format!("http://localhost:8000{path}")
+    } else {
+        path.to_string()
+    }
 }

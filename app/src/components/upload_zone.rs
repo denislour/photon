@@ -3,7 +3,7 @@ use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::i18n::*;
-use crate::utils::api::{self, fe_log};
+use crate::utils::api;
 use crate::utils::icons;
 
 #[allow(non_snake_case)]
@@ -18,8 +18,6 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
         let name = file.name();
         let size = file.size();
         let mime = file.type_();
-        fe_log(&format!("[Upload] file selected: name={name}, size={size}, mime={mime}"));
-
         uploading.set(true);
         progress.set(0);
         let p = progress;
@@ -28,10 +26,8 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
         let t = toast;
 
         leptos::task::spawn_local(async move {
-            fe_log("[Upload] starting upload_file API call...");
             match api::upload_file(file).await {
                 Ok(resp) => {
-                    fe_log(&format!("[Upload] success: id={}", resp.id));
                     p.set(100);
                     up.set(false);
                     ou.set(true);
@@ -42,7 +38,6 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                     }
                 }
                 Err(e) => {
-                    fe_log(&format!("[Upload] ERROR: {e}"));
                     up.set(false);
                     if let Some(msg) = t {
                         msg.set(format!("{}: {e}", tr(I18nKey::UploadError)));
@@ -55,7 +50,6 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
     };
 
     let on_change = move |ev: leptos::ev::Event| {
-        fe_log("[Upload] on_change fired");
         let target = ev.target().unwrap();
         let input = target.unchecked_ref::<web_sys::HtmlInputElement>();
         let files_val = js_sys::Reflect::get(input, &"files".into()).unwrap();

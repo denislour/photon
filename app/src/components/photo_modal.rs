@@ -1,10 +1,35 @@
+use gloo_timers::future::TimeoutFuture;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use gloo_timers::future::TimeoutFuture;
 
 use crate::i18n::*;
 use crate::utils::api::{self, MediaItem};
 use crate::utils::icons;
+
+fn is_faved(id: &str) -> bool {
+    web_sys::window()
+        .and_then(|w| w.local_storage().ok().flatten())
+        .and_then(|s| s.get_item("photon_favs").ok())
+        .flatten()
+        .map(|v| v.contains(id))
+        .unwrap_or(false)
+}
+
+fn toggle_fav(id: &str) {
+    let storage = web_sys::window().and_then(|w| w.local_storage().ok().flatten());
+    if let Some(s) = storage {
+        let current = s.get_item("photon_favs").ok().flatten().unwrap_or_default();
+        let next = if current.contains(id) {
+            current.replace(id, "").replace(",,", ",").trim_matches(',').to_string()
+        } else {
+            let mut r = current;
+            if !r.is_empty() { r.push(','); }
+            r.push_str(id);
+            r
+        };
+        let _ = s.set_item("photon_favs", &next);
+    }
+}
 
 #[allow(non_snake_case)]
 #[component]
@@ -56,8 +81,7 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                 } else { ().into_any() }}
 
                                 <div class="flex-1 overflow-y-auto px-12 py-5 flex flex-col items-center gap-3">
-                                    <img src=src
-                                        alt=item.original_name.clone()
+                                    <img src=src alt=item.original_name.clone()
                                         class="w-full min-h-[200px] rounded-sm object-contain bg-navy/30"
                                     />
                                     <div class="flex flex-wrap items-center justify-center gap-3 w-full py-1">
@@ -66,19 +90,26 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                         <span class="text-mute text-xs">{item.created_at.clone()}</span>
                                     </div>
                                     <div class="flex gap-4 pb-1">
-                                        <button on:click=move |_| {
-                                            if let Some(t) = toast {
-                                                t.set(tr(I18nKey::ToastSaved).into());
-                                                let t2 = t;
-                                                spawn_local(async move {
-                                                    TimeoutFuture::new(3000).await;
-                                                    t2.set(String::new());
-                                                });
-                                            }
-                                        } class="bg-none border-none text-gold opacity-50 cursor-pointer \
-                                            text-sm flex items-center gap-1 hover:opacity-100 transition-opacity">
-                                            {tr(I18nKey::ModalSave)}
-                                        </button>
+                                        {let fav_id = item.id.clone();
+                                        let fav_display = fav_id.clone();
+                                        view! {
+                                            <button on:click=move |_| {
+                                                    toggle_fav(&fav_id);
+                                                    if let Some(t) = toast {
+                                                        let msg = if is_faved(&fav_id) { "Da luu" } else { "Da bo luu" };
+                                                        t.set(msg.into());
+                                                        let t2 = t;
+                                                        spawn_local(async move {
+                                                            TimeoutFuture::new(3000).await;
+                                                            t2.set(String::new());
+                                                        });
+                                                    }
+                                                }
+                                                class="bg-none border-none cursor-pointer text-sm \
+                                                       flex items-center gap-1 transition-opacity">
+                                                {if is_faved(&fav_display) { "★" } else { "☆" }}
+                                            </button>
+                                        }}
                                         <button on:click=move |_| {
                                             if let Some(t) = toast {
                                                 t.set(tr(I18nKey::ToastDeleted).into());

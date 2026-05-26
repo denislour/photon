@@ -4,7 +4,7 @@ use leptos::task::spawn_local;
 use crate::components::{PhotoModal, UploadZone};
 use crate::i18n::*;
 use crate::stores::AppCtx;
-use crate::utils::api::{self, fe_log};
+use crate::utils::api;
 use crate::utils::icons;
 
 #[allow(non_snake_case)]
@@ -16,13 +16,9 @@ pub fn GalleryPage() -> impl IntoView {
 
     Effect::new(move |_| {
         if on_upload.get() {
-            fe_log("[Gallery] upload effect triggered, refetching...");
             on_upload.set(false);
             spawn_local(async move {
-                match api::fetch_media().await {
-                    Ok(items) => { fe_log(&format!("[Gallery] refetch: {} items", items.len())); media.set_items(items); }
-                    Err(e) => fe_log(&format!("[Gallery] refetch error: {e}")),
-                }
+                if let Ok(items) = api::fetch_media().await { media.set_items(items); }
             });
         }
     });
@@ -30,10 +26,7 @@ pub fn GalleryPage() -> impl IntoView {
     {
         let m = media;
         spawn_local(async move {
-            match api::fetch_media().await {
-                Ok(items) => { fe_log(&format!("fetch: {} items", items.len())); m.set_items(items); }
-                Err(e) => fe_log(&format!("fetch error: {e}")),
-            }
+            if let Ok(items) = api::fetch_media().await { m.set_items(items); }
         });
     }
 
@@ -116,8 +109,6 @@ pub fn GalleryPage() -> impl IntoView {
             {move || {
                 let all_items = media.filtered_items().get();
                 let grid = is_grid();
-                fe_log(&format!("[Gallery] render: {} items, grid={}", all_items.len(), grid));
-
                 if all_items.is_empty() {
                     return view! { <div class="text-center text-body py-20">{tr(I18nKey::EmptyGallery)}</div> }.into_any();
                 }
@@ -133,17 +124,16 @@ pub fn GalleryPage() -> impl IntoView {
                                                     relative bg-surf border border-hl transition-all \
                                                     hover:scale-[1.02] hover:shadow-lg hover:shadow-black/30"
                                             on:click=move |_| selected.set(Some(gi))>
-                                            <div class="bg-navy/30 h-32 flex items-center justify-center overflow-hidden">
+                                            <div class="bg-navy/30 h-52 flex items-center justify-center overflow-hidden">
                                                 {if item.mime_type.starts_with("video") {
                                                     view! { <span class="opacity-40" inner_html=icons::PLAY /> }.into_any()
                                                 } else {
                                                     view! { <img src=api::media_url(&item.id) alt="" class="w-full h-full object-cover" /> }.into_any()
                                                 }}
                                             </div>
-                                            <div class="absolute bottom-0 left-0 right-0 pt-9 pb-2.5 px-3 \
-                                                        bg-gradient-to-t from-navy/70 to-transparent text-ink">
-                                                <div class="text-xs font-medium">{item.original_name.clone()}</div>
-                                                <div class="text-[10px] text-mute mt-0.5">{item.created_at.clone()}</div>
+                                            <div class="p-2 border-t border-hl bg-surf">
+                                                <div class="text-xs font-medium text-ink truncate">{item.original_name.clone()}</div>
+                                                <div class="text-[10px] text-mute">{item.created_at.clone()}</div>
                                             </div>
                                         </div>
                                     }
