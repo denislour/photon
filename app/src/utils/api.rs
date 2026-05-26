@@ -1,5 +1,3 @@
-use js_sys::Uint8Array;
-use reqwest::multipart::{Form, Part};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
@@ -70,48 +68,48 @@ pub async fn fetch_media() -> Result<Vec<MediaItem>, String> {
 pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> {
     let file_name = file.name();
     let file_mime = file.type_();
-    web_sys::console::log_1(&format!("[API] upload_file: {file_name} ({file_mime})").into());
+    web_sys::console::log_1(&JsValue::from(format!("[API] upload: {file_name} ({file_mime})")));
 
-    let blob: web_sys::Blob = file.unchecked_into();
-    let buf = JsFuture::from(blob.array_buffer()).await.map_err(|e| {
-        let msg = format!("array_buffer error: {:?}", e);
-        web_sys::console::log_1(&msg.clone().into());
-        msg
-    })?;
-    let arr = Uint8Array::new(&buf);
-    let bytes = arr.to_vec();
-    web_sys::console::log_1(&format!("[API] read {} bytes", bytes.len()).into());
+    // Use browser native fetch with FormData instead of reqwest multipart
+    let form_data = web_sys::FormData::new().map_err(|e| format!("FormData error: {:?}", e))?;
+    form_data.append_with_blob("file", &file).map_err(|e| format!("append error: {:?}", e))?;
 
-    let part = Part::bytes(bytes)
-        .file_name(file_name)
-        .mime_str(&file_mime)
-        .map_err(|e| e.to_string())?;
+    let opts = web_sys::RequestInit::new();
+    opts.set_method("POST");
+    opts.set_body(&form_data);
 
-    let form = Form::new().part("file", part);
+    let request = web_sys::Request::new_with_str_and_init("/api/media", &opts)
+        .map_err(|e| format!("Request init error: {:?}", e))?;
 
-    web_sys::console::log_1(&JsValue::from("[API] sending POST /api/media..."));
-    let resp = reqwest::Client::new()
-        .post("/api/media")
-        .multipart(form)
-        .send()
-        .await
-        .map_err(|e| {
-            let msg = format!("reqwest error: {e}");
-            web_sys::console::log_1(&msg.clone().into());
-            msg
-        })?;
+    let promise = web_sys::window()
+        .unwrap()
+        .fetch_with_request(&request);
 
-    web_sys::console::log_1(&format!("[API] response status: {}", resp.status()).into());
+    let resp = JsFuture::from(promise).await
+        .map_err(|e| format!("fetch error: {:?}", e))?;
 
-    if !resp.status().is_success() {
-        let text = resp.text().await.map_err(|e| e.to_string())?;
-        web_sys::console::log_1(&format!("[API] error body: {text}").into());
+    let resp = resp.unchecked_into::<web_sys::Response>();
+    let status = resp.status();
+    web_sys::console::log_1(&JsValue::from(format!("[API] response status: {status}")));
+
+    if status != 201 {
+        let text_promise = resp.text().map_err(|e| format!("text error: {:?}", e))?;
+        let text = JsFuture::from(text_promise).await
+            .map_err(|e| format!("text await error: {:?}", e))?;
+        let text = text.as_string().unwrap_or_default();
+        web_sys::console::log_1(&JsValue::from(format!("[API] error body: {text}")));
         return Err(text);
     }
 
-    let json = resp.json().await.map_err(|e| e.to_string())?;
+    let json_promise = resp.json().map_err(|e| format!("json error: {:?}", e))?;
+    let json_val = JsFuture::from(json_promise).await
+        .map_err(|e| format!("json await error: {:?}", e))?;
+
+    let result: UploadResponse = serde_wasm_bindgen::from_value(json_val)
+        .map_err(|e| format!("deserialize error: {e}"))?;
+
     web_sys::console::log_1(&JsValue::from("[API] upload success"));
-    Ok(json)
+    Ok(result)
 }
 
 pub async fn fetch_albums() -> Result<Vec<Album>, String> {

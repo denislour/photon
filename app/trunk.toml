@@ -8,3 +8,9 @@ extra_args = ["--target", "wasm32-unknown-unknown"]
 
 [tools]
 tailwindcss = "3"
+
+[serve]
+port = 3000
+
+[[proxy]]
+backend = "http://localhost:8000/"
