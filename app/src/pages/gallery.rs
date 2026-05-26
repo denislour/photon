@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
-use crate::components::UploadZone;
+use crate::components::{PhotoModal, UploadZone};
 use crate::stores::AppCtx;
 use crate::utils::api;
 
@@ -40,8 +40,29 @@ pub fn GalleryPage() -> impl IntoView {
         media.set_search_query(&input.value());
     };
 
+    let selected = RwSignal::new(None::<usize>);
+
+    let on_keydown = move |ev: leptos::ev::KeyboardEvent| {
+        match ev.key().as_str() {
+            "Escape" => selected.set(None),
+            "ArrowLeft" => {
+                let i = selected.get();
+                if let Some(idx) = i {
+                    if idx > 0 { selected.set(Some(idx - 1)); }
+                }
+            }
+            "ArrowRight" => {
+                let i = selected.get();
+                if let Some(idx) = i {
+                    if idx + 1 < media.items().get().len() { selected.set(Some(idx + 1)); }
+                }
+            }
+            _ => {}
+        }
+    };
+
     view! {
-        <div class="max-w-[1200px] mx-auto px-5">
+        <div class="max-w-[1200px] mx-auto px-5" on:keydown=on_keydown>
             <div class="pt-10 pb-5 text-center">
                 <h1 class="text-[34px] font-semibold -tracking-[.8px] text-ink mb-1">
                     <em class="not-italic text-gold">"KhangHeo"</em>
@@ -123,11 +144,13 @@ pub fn GalleryPage() -> impl IntoView {
                 if grid {
                     view! {
                         <div class="columns-4 max-[1080px]:columns-3 max-[740px]:columns-2 max-[440px]:columns-1 gap-2">
-                            {items.into_iter().map(|item| {
+                            {items.into_iter().enumerate().map(|(gi, item)| {
+                                let gi = gi;
                                 view! {
                                     <div class="break-inside-avoid mb-2 rounded-sm overflow-hidden \
                                                 cursor-pointer relative bg-surf border border-hl \
-                                                transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-black/30">
+                                                transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-black/30"
+                                        on:click=move |_| selected.set(Some(gi))>
                                         <div class="bg-navy/30 h-32 flex items-center justify-center text-body text-xs">
                                             {if item.mime_type.starts_with("video") { "▶" } else { "🖼" }}
                                         </div>
@@ -144,11 +167,13 @@ pub fn GalleryPage() -> impl IntoView {
                 } else {
                     view! {
                         <div class="flex flex-col gap-2">
-                            {items.into_iter().map(|item| {
+                            {items.into_iter().enumerate().map(|(gi, item)| {
+                                let gi = gi;
                                 view! {
                                     <div class="flex items-center gap-3 p-2 rounded-sm \
                                                 cursor-pointer bg-surf border border-hl \
-                                                transition-all hover:border-hl2">
+                                                transition-all hover:border-hl2"
+                                        on:click=move |_| selected.set(Some(gi))>
                                         <div class="w-12 h-12 shrink-0 bg-navy/30 rounded \
                                                     flex items-center justify-center text-body text-xs">
                                             {if item.mime_type.starts_with("video") { "▶" } else { "🖼" }}
@@ -166,5 +191,7 @@ pub fn GalleryPage() -> impl IntoView {
                 }
             }}
         </div>
+
+        <PhotoModal items=media.items().get() index=selected />
     }
 }
