@@ -1,16 +1,14 @@
-set shell := ["bash", "-c"]
-
 dev:
     @echo "=== Photon Dev Server ==="
     @echo "Pre-building BE (WASM debug)..."
     @cd api && cargo build --target wasm32-unknown-unknown 2>&1 | tail -1
     @echo "Starting API (port 8000) and App (port 3000)..."
     @trap 'kill 0' EXIT; \
-    (just dev-api) & \
+    (cd api && npx wrangler dev --port 8000) & \
     echo "Waiting for API to be ready..." && \
     until curl -s -o /dev/null http://localhost:8000/api/media 2>/dev/null; do sleep 1; done && \
     echo "API ready, starting frontend..." && \
-    just dev-app
+    cd app && trunk serve --port 3000
 
 dev-api:
     cd api && npx wrangler dev --port 8000
