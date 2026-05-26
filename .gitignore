@@ -1,7 +1,5 @@
 # Rust
-/target
-api/target/
-app/target/
+target/
 **/*.rs.bk
 *.pdb
 rustc-ice-*.txt
@@ -20,7 +18,6 @@ rustc-ice-*.txt
 
 # Cloudflare wrangler (local state, D1 sqlite, cache)
 .wrangler/
-api/.wrangler/
 
 # Design docs (reference only, not part of source)
 .docs/
