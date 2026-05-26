@@ -4,7 +4,7 @@ use leptos::task::spawn_local;
 use crate::components::{PhotoModal, UploadZone};
 use crate::i18n::*;
 use crate::stores::AppCtx;
-use crate::utils::api;
+use crate::utils::api::{self, fe_log};
 use crate::utils::icons;
 
 #[allow(non_snake_case)]
@@ -16,9 +16,13 @@ pub fn GalleryPage() -> impl IntoView {
 
     Effect::new(move |_| {
         if on_upload.get() {
+            fe_log("[Gallery] upload effect triggered, refetching...");
             on_upload.set(false);
             spawn_local(async move {
-                if let Ok(items) = api::fetch_media().await { media.set_items(items); }
+                match api::fetch_media().await {
+                    Ok(items) => { fe_log(&format!("[Gallery] refetch: {} items", items.len())); media.set_items(items); }
+                    Err(e) => fe_log(&format!("[Gallery] refetch error: {e}")),
+                }
             });
         }
     });
@@ -41,9 +45,15 @@ pub fn GalleryPage() -> impl IntoView {
     };
 
     // Initial fetch on mount
-    spawn_local(async move {
-        if let Ok(items) = api::fetch_media().await { media.set_items(items); }
-    });
+    {
+        let m = media;
+        spawn_local(async move {
+            match api::fetch_media().await {
+                Ok(items) => { fe_log(&format!("fetch: {} items", items.len())); m.set_items(items); }
+                Err(e) => fe_log(&format!("fetch error: {e}")),
+            }
+        });
+    }
 
     let filters = ["all", "photo", "video"];
     let filter_labels = [tr(I18nKey::FilterAll), tr(I18nKey::FilterPhoto), tr(I18nKey::FilterVideo)];
@@ -107,6 +117,7 @@ pub fn GalleryPage() -> impl IntoView {
             {move || {
                 let all_items = media.filtered_items().get();
                 let grid = is_grid();
+                fe_log(&format!("[Gallery] render: {} items, grid={}", all_items.len(), grid));
 
                 if all_items.is_empty() {
                     return view! { <div class="text-center text-body py-20">{tr(I18nKey::EmptyGallery)}</div> }.into_any();
