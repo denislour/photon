@@ -2,6 +2,17 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
 
+/// Generate URL for media file, handling dev (different port) and prod (same origin)
+pub fn media_url(id: &str) -> String {
+    let loc = web_sys::window().unwrap().location();
+    let host = loc.host().unwrap_or_default();
+    if host.ends_with(":3000") || host.ends_with(":3000/") {
+        format!("http://localhost:8000/api/media/{id}")
+    } else {
+        format!("/api/media/{id}")
+    }
+}
+
 /// Log to both browser console AND BE terminal (via /api/log)
 pub fn fe_log(msg: &str) {
     web_sys::console::log_1(&JsValue::from(msg));

@@ -3,18 +3,8 @@ use leptos::task::spawn_local;
 use gloo_timers::future::TimeoutFuture;
 
 use crate::i18n::*;
-use crate::utils::api::MediaItem;
+use crate::utils::api::{self, MediaItem};
 use crate::utils::icons;
-
-fn img_url(id: &str) -> String {
-    let loc = web_sys::window().unwrap().location();
-    let host = loc.host().unwrap_or_default();
-    if host.ends_with(":3000") || host.ends_with(":3000/") {
-        format!("http://localhost:8000/api/media/{id}")
-    } else {
-        format!("/api/media/{id}")
-    }
-}
 
 #[allow(non_snake_case)]
 #[component]
@@ -29,7 +19,7 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                 Some(idx) => {
                     let total = items.len();
                     let item = items[idx].clone();
-                    let src = img_url(&item.id);
+                    let src = api::media_url(&item.id);
 
                     Some(view! {
                         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center"
@@ -110,7 +100,7 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                             justify-center border-t border-hl">
                                     {items.iter().enumerate().map(|(i, ph)| {
                                         let is_active = i == idx;
-                                        let thumb_src = img_url(&ph.id);
+                                        let thumb_src = api::media_url(&ph.id);
                                         view! {
                                             <div on:click=move |_| index.set(Some(i))
                                                 class="w-9 h-9 rounded border cursor-pointer shrink-0 \

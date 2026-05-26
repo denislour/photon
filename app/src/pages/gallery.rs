@@ -133,9 +133,12 @@ pub fn GalleryPage() -> impl IntoView {
                                                     relative bg-surf border border-hl transition-all \
                                                     hover:scale-[1.02] hover:shadow-lg hover:shadow-black/30"
                                             on:click=move |_| selected.set(Some(gi))>
-                                            <div class="bg-navy/30 h-32 flex items-center justify-center">
-                                                <span class="opacity-40"
-                                                    inner_html={if item.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }} />
+                                            <div class="bg-navy/30 h-32 flex items-center justify-center overflow-hidden">
+                                                {if item.mime_type.starts_with("video") {
+                                                    view! { <span class="opacity-40" inner_html=icons::PLAY /> }.into_any()
+                                                } else {
+                                                    view! { <img src=api::media_url(&item.id) alt="" class="w-full h-full object-cover" /> }.into_any()
+                                                }}
                                             </div>
                                             <div class="absolute bottom-0 left-0 right-0 pt-9 pb-2.5 px-3 \
                                                         bg-gradient-to-t from-navy/70 to-transparent text-ink">
