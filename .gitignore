@@ -4,9 +4,6 @@ target/
 *.pdb
 rustc-ice-*.txt
 
-# JetBrains IDE
-.idea/
-
 # Editor
 *~
 *.swp
