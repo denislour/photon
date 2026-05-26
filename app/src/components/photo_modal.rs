@@ -6,6 +6,16 @@ use crate::i18n::*;
 use crate::utils::api::MediaItem;
 use crate::utils::icons;
 
+fn img_url(id: &str) -> String {
+    let loc = web_sys::window().unwrap().location();
+    let host = loc.host().unwrap_or_default();
+    if host.ends_with(":3000") || host.ends_with(":3000/") {
+        format!("http://localhost:8000/api/media/{id}")
+    } else {
+        format!("/api/media/{id}")
+    }
+}
+
 #[allow(non_snake_case)]
 #[component]
 pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl IntoView {
@@ -19,6 +29,8 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                 Some(idx) => {
                     let total = items.len();
                     let item = items[idx].clone();
+                    let src = img_url(&item.id);
+
                     Some(view! {
                         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center"
                             on:click=move |ev| {
@@ -54,10 +66,10 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                 } else { ().into_any() }}
 
                                 <div class="flex-1 overflow-y-auto px-12 py-5 flex flex-col items-center gap-3">
-                                    <div class="w-full min-h-[200px] rounded-sm flex items-center \
-                                                justify-center bg-navy/30 text-body text-sm">
-                                        {item.original_name.clone()}
-                                    </div>
+                                    <img src=src
+                                        alt=item.original_name.clone()
+                                        class="w-full min-h-[200px] rounded-sm object-contain bg-navy/30"
+                                    />
                                     <div class="flex flex-wrap items-center justify-center gap-3 w-full py-1">
                                         <span class="text-body font-medium text-sm">{format!("{}/{}", idx + 1, total)}</span>
                                         <span class="text-ink font-medium text-sm">{item.original_name.clone()}</span>
@@ -98,6 +110,7 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                             justify-center border-t border-hl">
                                     {items.iter().enumerate().map(|(i, ph)| {
                                         let is_active = i == idx;
+                                        let thumb_src = img_url(&ph.id);
                                         view! {
                                             <div on:click=move |_| index.set(Some(i))
                                                 class="w-9 h-9 rounded border cursor-pointer shrink-0 \
@@ -105,9 +118,11 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                                     flex items-center justify-center bg-navy/30"
                                                 class:border-gold=is_active
                                                 class:border-transparent=!is_active>
-                                                <span inner_html={
-                                                    if ph.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }
-                                                } />
+                                                {if ph.mime_type.starts_with("video") {
+                                                    view! { <span inner_html=icons::PLAY /> }.into_any()
+                                                } else {
+                                                    view! { <img src=thumb_src alt="" class="w-full h-full object-cover" /> }.into_any()
+                                                }}
                                             </div>
                                         }
                                     }).collect::<Vec<_>>()}
