@@ -1,4 +1,7 @@
 dev:
+    @echo "=== Photon Dev Server ==="
+    @echo "Pre-building BE (WASM debug)..."
+    @cd api && cargo build --target wasm32-unknown-unknown 2>&1 | tail -1
     @echo "Starting API (port 8000) and App (port 3000)..."
     @trap 'kill 0' EXIT; \
     (just dev-api) & \
