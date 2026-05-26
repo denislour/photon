@@ -1,5 +1,7 @@
 # Rust
 /target
+api/target/
+app/target/
 **/*.rs.bk
 *.pdb
 rustc-ice-*.txt

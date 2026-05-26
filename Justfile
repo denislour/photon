@@ -1,11 +1,11 @@
 dev:
     @echo "Starting API (port 8000) and App (port 3000)..."
     @trap 'kill 0' EXIT; \
-    (cd api && npx wrangler dev --port 8000) & \
+    (just dev-api) & \
     echo "Waiting for API to be ready..." && \
     until curl -s -o /dev/null http://localhost:8000/api/media 2>/dev/null; do sleep 1; done && \
     echo "API ready, starting frontend..." && \
-    cd app && trunk serve --port 3000
+    just dev-app
 
 dev-api:
     cd api && npx wrangler dev --port 8000
