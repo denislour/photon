@@ -27,6 +27,16 @@ pub fn GalleryPage() -> impl IntoView {
         }
     });
 
+    {
+        let m = media;
+        spawn_local(async move {
+            match api::fetch_media().await {
+                Ok(items) => { fe_log(&format!("fetch: {} items", items.len())); m.set_items(items); }
+                Err(e) => fe_log(&format!("fetch error: {e}")),
+            }
+        });
+    }
+
     let on_keydown = move |ev: leptos::ev::KeyboardEvent| {
         match ev.key().as_str() {
             "Escape" => selected.set(None),
@@ -43,17 +53,6 @@ pub fn GalleryPage() -> impl IntoView {
             _ => {}
         }
     };
-
-    // Initial fetch on mount
-    {
-        let m = media;
-        spawn_local(async move {
-            match api::fetch_media().await {
-                Ok(items) => { fe_log(&format!("fetch: {} items", items.len())); m.set_items(items); }
-                Err(e) => fe_log(&format!("fetch error: {e}")),
-            }
-        });
-    }
 
     let filters = ["all", "photo", "video"];
     let filter_labels = [tr(I18nKey::FilterAll), tr(I18nKey::FilterPhoto), tr(I18nKey::FilterVideo)];
@@ -123,58 +122,60 @@ pub fn GalleryPage() -> impl IntoView {
                     return view! { <div class="text-center text-body py-20">{tr(I18nKey::EmptyGallery)}</div> }.into_any();
                 }
 
-                let modal = view! { <PhotoModal items=all_items.clone() index=selected /> }.into_any();
-
                 if grid {
                     view! {
-                        <div class="columns-4 max-[1080px]:columns-3 max-[740px]:columns-2 max-[440px]:columns-1 gap-2">
-                            {all_items.iter().enumerate().map(|(gi, item)| {
-                                let gi = gi;
-                                view! {
-                                    <div class="break-inside-avoid mb-2 rounded-sm overflow-hidden cursor-pointer \
-                                                relative bg-surf border border-hl transition-all \
-                                                hover:scale-[1.02] hover:shadow-lg hover:shadow-black/30"
-                                        on:click=move |_| selected.set(Some(gi))>
-                                        <div class="bg-navy/30 h-32 flex items-center justify-center">
-                                            <span class="opacity-40"
-                                                inner_html={if item.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }} />
+                        <>
+                            <div class="columns-4 max-[1080px]:columns-3 max-[740px]:columns-2 max-[440px]:columns-1 gap-2">
+                                {all_items.iter().enumerate().map(|(gi, item)| {
+                                    let gi = gi;
+                                    view! {
+                                        <div class="break-inside-avoid mb-2 rounded-sm overflow-hidden cursor-pointer \
+                                                    relative bg-surf border border-hl transition-all \
+                                                    hover:scale-[1.02] hover:shadow-lg hover:shadow-black/30"
+                                            on:click=move |_| selected.set(Some(gi))>
+                                            <div class="bg-navy/30 h-32 flex items-center justify-center">
+                                                <span class="opacity-40"
+                                                    inner_html={if item.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }} />
+                                            </div>
+                                            <div class="absolute bottom-0 left-0 right-0 pt-9 pb-2.5 px-3 \
+                                                        bg-gradient-to-t from-navy/70 to-transparent text-ink">
+                                                <div class="text-xs font-medium">{item.original_name.clone()}</div>
+                                                <div class="text-[10px] text-mute mt-0.5">{item.created_at.clone()}</div>
+                                            </div>
                                         </div>
-                                        <div class="absolute bottom-0 left-0 right-0 pt-9 pb-2.5 px-3 \
-                                                    bg-gradient-to-t from-navy/70 to-transparent text-ink">
-                                            <div class="text-xs font-medium">{item.original_name.clone()}</div>
-                                            <div class="text-[10px] text-mute mt-0.5">{item.created_at.clone()}</div>
-                                        </div>
-                                    </div>
-                                }
-                            }).collect::<Vec<_>>()}
-                        </div>
+                                    }
+                                }).collect::<Vec<_>>()}
+                            </div>
+                            <PhotoModal items=all_items.clone() index=selected />
+                        </>
                     }.into_any()
                 } else {
                     view! {
-                        <div class="flex flex-col gap-2">
-                            {all_items.iter().enumerate().map(|(gi, item)| {
-                                let gi = gi;
-                                view! {
-                                    <div class="flex items-center gap-3 p-2 rounded-sm cursor-pointer \
-                                                bg-surf border border-hl transition-all hover:border-hl2"
-                                        on:click=move |_| selected.set(Some(gi))>
-                                        <div class="w-12 h-12 shrink-0 bg-navy/30 rounded flex items-center justify-center">
-                                            <span class="opacity-40"
-                                                inner_html={if item.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }} />
+                        <>
+                            <div class="flex flex-col gap-2">
+                                {all_items.iter().enumerate().map(|(gi, item)| {
+                                    let gi = gi;
+                                    view! {
+                                        <div class="flex items-center gap-3 p-2 rounded-sm cursor-pointer \
+                                                    bg-surf border border-hl transition-all hover:border-hl2"
+                                            on:click=move |_| selected.set(Some(gi))>
+                                            <div class="w-12 h-12 shrink-0 bg-navy/30 rounded flex items-center justify-center">
+                                                <span class="opacity-40"
+                                                    inner_html={if item.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }} />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-sm font-medium text-ink truncate">{item.original_name.clone()}</div>
+                                                <div class="text-xs text-mute">{item.created_at.clone()}</div>
+                                            </div>
+                                            <div class="text-[10px] text-body shrink-0">{item.mime_type.clone()}</div>
                                         </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="text-sm font-medium text-ink truncate">{item.original_name.clone()}</div>
-                                            <div class="text-xs text-mute">{item.created_at.clone()}</div>
-                                        </div>
-                                        <div class="text-[10px] text-body shrink-0">{item.mime_type.clone()}</div>
-                                    </div>
-                                }
-                            }).collect::<Vec<_>>()}
-                        </div>
+                                    }
+                                }).collect::<Vec<_>>()}
+                            </div>
+                            <PhotoModal items=all_items.clone() index=selected />
+                        </>
                     }.into_any()
-                };
-
-                modal
+                }
             }}
         </div>
     }
