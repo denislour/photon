@@ -1,15 +1,9 @@
 use gloo_timers::future::TimeoutFuture;
 use leptos::prelude::*;
-use wasm_bindgen::{JsCast, prelude::wasm_bindgen};
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
+use wasm_bindgen::JsCast;
 
 use crate::i18n::*;
-use crate::utils::api;
+use crate::utils::api::{self, fe_log};
 use crate::utils::icons;
 
 #[allow(non_snake_case)]
@@ -24,7 +18,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
         let name = file.name();
         let size = file.size();
         let mime = file.type_();
-        log(&format!("[Upload] file selected: name={name}, size={size}, mime={mime}"));
+        fe_log(&format!("[Upload] file selected: name={name}, size={size}, mime={mime}"));
 
         uploading.set(true);
         progress.set(0);
@@ -34,10 +28,10 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
         let t = toast;
 
         leptos::task::spawn_local(async move {
-            log("[Upload] starting upload_file API call...");
+            fe_log("[Upload] starting upload_file API call...");
             match api::upload_file(file).await {
                 Ok(resp) => {
-                    log(&format!("[Upload] success: id={}", resp.id));
+                    fe_log(&format!("[Upload] success: id={}", resp.id));
                     p.set(100);
                     up.set(false);
                     ou.set(true);
@@ -48,7 +42,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                     }
                 }
                 Err(e) => {
-                    log(&format!("[Upload] ERROR: {e}"));
+                    fe_log(&format!("[Upload] ERROR: {e}"));
                     up.set(false);
                     if let Some(msg) = t {
                         msg.set(format!("{}: {e}", tr(I18nKey::UploadError)));
@@ -61,21 +55,12 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
     };
 
     let on_change = move |ev: leptos::ev::Event| {
-        log("[Upload] on_change fired");
-        let target = ev.target();
-        log(&format!("[Upload] target: {:?}", target.is_some()));
-
-        let target = target.unwrap();
+        fe_log("[Upload] on_change fired");
+        let target = ev.target().unwrap();
         let input = target.unchecked_ref::<web_sys::HtmlInputElement>();
-        let files_val = js_sys::Reflect::get(input, &"files".into());
-        log(&format!("[Upload] files reflect: {:?}", files_val.is_ok()));
-
-        let files_val = files_val.unwrap();
+        let files_val = js_sys::Reflect::get(input, &"files".into()).unwrap();
         let files = files_val.unchecked_into::<web_sys::FileList>();
-        let file = files.get(0);
-        log(&format!("[Upload] file from list: {:?}", file.is_some()));
-
-        if let Some(file) = file {
+        if let Some(file) = files.get(0) {
             handle_file(file);
         }
     };

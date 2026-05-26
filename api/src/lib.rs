@@ -8,6 +8,7 @@ use worker::*;
 mod albums;
 mod db;
 mod error;
+mod log;
 mod media;
 mod search;
 
@@ -53,6 +54,7 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> Result<http::Respon
         .route("/api/albums", get(albums::route::list))
         .route("/api/albums/{id}", get(albums::route::get))
         .route("/api/search", get(search::route::search))
+        .route("/api/log", post(log::log))
         .layer(cors)
         .with_state(state);
 
