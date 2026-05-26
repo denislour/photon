@@ -22,9 +22,7 @@ pub enum I18nKey {
     AlbumNamePlaceholder,
     AlbumCreateSuccess,
     ModalClose,
-    ModalSave,
     ModalDelete,
-    ToastSaved,
     ToastDeleted,
     AlbumLabel,
 }
@@ -53,9 +51,7 @@ pub fn tr(key: I18nKey) -> &'static str {
         I18nKey::AlbumNamePlaceholder => "VD: Khang tháng 5",
         I18nKey::AlbumCreateSuccess => "Đã tạo",
         I18nKey::ModalClose => "Đóng",
-        I18nKey::ModalSave => "Lưu",
         I18nKey::ModalDelete => "Xóa",
-        I18nKey::ToastSaved => "Đã lưu",
         I18nKey::ToastDeleted => "Đã xóa",
         I18nKey::AlbumLabel => "Album",
     }

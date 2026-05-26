@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 /// Generate URL for media file, handling dev (different port) and prod (same origin)
@@ -78,8 +78,8 @@ pub async fn fetch_media() -> Result<Vec<MediaItem>, String> {
 }
 
 pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> {
-    let file_name = file.name();
-    let file_mime = file.type_();
+    let _file_name = file.name();
+    let _file_mime = file.type_();
     let url = api_url("/api/media");
 
     let form_data = web_sys::FormData::new().map_err(|e| format!("FormData error: {:?}", e))?;

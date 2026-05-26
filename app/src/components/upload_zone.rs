@@ -15,9 +15,9 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
     let toast = use_context::<RwSignal<String>>();
 
     let handle_file = move |file: web_sys::File| {
-        let name = file.name();
-        let size = file.size();
-        let mime = file.type_();
+        let _name = file.name();
+        let _size = file.size();
+        let _mime = file.type_();
         uploading.set(true);
         progress.set(0);
         let p = progress;
@@ -27,7 +27,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
 
         leptos::task::spawn_local(async move {
             match api::upload_file(file).await {
-                Ok(resp) => {
+                Ok(_resp) => {
                     p.set(100);
                     up.set(false);
                     ou.set(true);

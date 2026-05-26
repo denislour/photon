@@ -21,4 +21,4 @@ pub const FOLDER: &str = r#"<svg width="16" height="16" viewBox="0 0 16 16" fill
 
 pub const PLAY: &str = r#"<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="5,2 13,8 5,14"/></svg>"#;
 
-pub const IMAGE: &str = r#"<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1.5"/><circle cx="6.5" cy="7.5" r="1.5"/><path d="M2 11l4-4 2.5 2.5 2-2L15 12"/></svg>"#;
+
