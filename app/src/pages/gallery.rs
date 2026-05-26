@@ -23,12 +23,6 @@ pub fn GalleryPage() -> impl IntoView {
         }
     });
 
-    Effect::new(move |_| {
-        spawn_local(async move {
-            if let Ok(items) = api::fetch_media().await { media.set_items(items); }
-        });
-    });
-
     let on_keydown = move |ev: leptos::ev::KeyboardEvent| {
         match ev.key().as_str() {
             "Escape" => selected.set(None),
@@ -45,6 +39,11 @@ pub fn GalleryPage() -> impl IntoView {
             _ => {}
         }
     };
+
+    // Initial fetch on mount
+    spawn_local(async move {
+        if let Ok(items) = api::fetch_media().await { media.set_items(items); }
+    });
 
     let filters = ["all", "photo", "video"];
     let filter_labels = [tr(I18nKey::FilterAll), tr(I18nKey::FilterPhoto), tr(I18nKey::FilterVideo)];
