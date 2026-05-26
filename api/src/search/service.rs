@@ -9,7 +9,7 @@ pub async fn search(db: &D1Database, query: &str, limit: u32) -> Result<Vec<Medi
         .prepare(
             "SELECT * FROM media WHERE original_name LIKE ?1 ORDER BY created_at DESC LIMIT ?2",
         )
-        .bind(&[pattern.into(), (limit as i64).into()])?
+        .bind(&[pattern.into(), (limit as f64).into()])?
         .run()
         .await?;
 

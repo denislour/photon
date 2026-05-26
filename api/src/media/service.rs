@@ -45,7 +45,7 @@ pub async fn insert(db: &D1Database, media: &Media) -> Result<(), AppError> {
         media.id.clone().into(),
         media.original_name.clone().into(),
         media.mime_type.clone().into(),
-        (media.file_size as i64).into(),
+        (media.file_size as f64).into(),
         media.width.unwrap_or(0).into(),
         media.height.unwrap_or(0).into(),
         media.duration.unwrap_or(0.0).into(),
@@ -90,7 +90,7 @@ pub async fn list(
             db.prepare(
                 "SELECT * FROM media WHERE album_id = ?1 ORDER BY created_at DESC LIMIT ?2 OFFSET ?3",
             )
-            .bind(&[aid.into(), (limit as i64).into(), (offset as i64).into()])?
+            .bind(&[aid.into(), (limit as f64).into(), (offset as f64).into()])?
             .run()
             .await?
         }
@@ -98,7 +98,7 @@ pub async fn list(
             db.prepare(
                 "SELECT * FROM media ORDER BY created_at DESC LIMIT ?1 OFFSET ?2",
             )
-            .bind(&[(limit as i64).into(), (offset as i64).into()])?
+            .bind(&[(limit as f64).into(), (offset as f64).into()])?
             .run()
             .await?
         }
