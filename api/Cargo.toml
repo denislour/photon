@@ -7,7 +7,7 @@ edition = "2024"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-worker = { version = "0.8", features = ["http", "axum", "r2", "d1"] }
+worker = { version = "0.8", features = ["http", "axum", "d1"] }
 axum = { version = "0.8", default-features = false, features = ["json", "multipart"] }
 tokio = { version = "1", default-features = false, features = ["rt", "macros"] }
 serde = { version = "1", features = ["derive"] }
