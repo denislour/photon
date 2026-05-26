@@ -18,7 +18,9 @@ pub fn GalleryPage() -> impl IntoView {
         if on_upload.get() {
             on_upload.set(false);
             spawn_local(async move {
-                if let Ok(items) = api::fetch_media().await { media.set_items(items); }
+                if let Ok(items) = api::fetch_media().await {
+                    media.set_items(items);
+                }
             });
         }
     });
@@ -26,29 +28,37 @@ pub fn GalleryPage() -> impl IntoView {
     {
         let m = media;
         spawn_local(async move {
-            if let Ok(items) = api::fetch_media().await { m.set_items(items); }
+            if let Ok(items) = api::fetch_media().await {
+                m.set_items(items);
+            }
         });
     }
 
-    let on_keydown = move |ev: leptos::ev::KeyboardEvent| {
-        match ev.key().as_str() {
-            "Escape" => selected.set(None),
-            "ArrowLeft" => {
-                if let Some(idx) = selected.get() {
-                    if idx > 0 { selected.set(Some(idx - 1)); }
+    let on_keydown = move |ev: leptos::ev::KeyboardEvent| match ev.key().as_str() {
+        "Escape" => selected.set(None),
+        "ArrowLeft" => {
+            if let Some(idx) = selected.get() {
+                if idx > 0 {
+                    selected.set(Some(idx - 1));
                 }
             }
-            "ArrowRight" => {
-                if let Some(idx) = selected.get() {
-                    if idx + 1 < media.items().get().len() { selected.set(Some(idx + 1)); }
-                }
-            }
-            _ => {}
         }
+        "ArrowRight" => {
+            if let Some(idx) = selected.get() {
+                if idx + 1 < media.items().get().len() {
+                    selected.set(Some(idx + 1));
+                }
+            }
+        }
+        _ => {}
     };
 
     let filters = ["all", "photo", "video"];
-    let filter_labels = [tr(I18nKey::FilterAll), tr(I18nKey::FilterPhoto), tr(I18nKey::FilterVideo)];
+    let filter_labels = [
+        tr(I18nKey::FilterAll),
+        tr(I18nKey::FilterPhoto),
+        tr(I18nKey::FilterVideo),
+    ];
     let is_grid = move || app.view_mode().get() == "grid";
 
     let on_search = move |ev: leptos::ev::Event| {
