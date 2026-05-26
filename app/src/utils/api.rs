@@ -11,9 +11,35 @@ pub struct MediaItem {
     pub created_at: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Album {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub cover_path: Option<String>,
+    pub created_at: String,
+}
+
 #[derive(Debug, Deserialize)]
 struct MediaListResponse {
     pub items: Vec<MediaItem>,
+}
+
+#[derive(Debug, Deserialize)]
+struct AlbumListResponse {
+    pub albums: Vec<Album>,
+}
+
+#[derive(Debug, Deserialize)]
+struct AlbumCreateResponse {
+    pub album: Album,
+}
+
+#[derive(Debug, Serialize)]
+struct CreateAlbumBody {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -62,4 +88,41 @@ pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> 
     }
 
     resp.json().await.map_err(|e| e.to_string())
+}
+
+pub async fn fetch_albums() -> Result<Vec<Album>, String> {
+    let resp = reqwest::Client::new()
+        .get("/api/albums")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !resp.status().is_success() {
+        return Err(format!("HTTP {}", resp.status()));
+    }
+
+    let body: AlbumListResponse = resp.json().await.map_err(|e| e.to_string())?;
+    Ok(body.albums)
+}
+
+pub async fn create_album(name: &str, description: Option<String>) -> Result<Album, String> {
+    let body = CreateAlbumBody {
+        name: name.into(),
+        description,
+    };
+
+    let resp = reqwest::Client::new()
+        .post("/api/albums")
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !resp.status().is_success() {
+        let text = resp.text().await.map_err(|e| e.to_string())?;
+        return Err(text);
+    }
+
+    let body: AlbumCreateResponse = resp.json().await.map_err(|e| e.to_string())?;
+    Ok(body.album)
 }
