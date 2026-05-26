@@ -4,120 +4,91 @@ use gloo_timers::future::TimeoutFuture;
 
 use crate::i18n::*;
 use crate::utils::api::MediaItem;
+use crate::utils::icons;
 
 #[allow(non_snake_case)]
 #[component]
-pub fn PhotoModal(
-    items: Vec<MediaItem>,
-    index: RwSignal<Option<usize>>,
-) -> impl IntoView {
+pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl IntoView {
     let toast = use_context::<RwSignal<String>>();
-
     let close = move || index.set(None);
 
     view! {
         {move || {
-            let idx = index.get();
-            match idx {
+            match index.get() {
                 None => None,
                 Some(idx) => {
                     let total = items.len();
                     let item = items[idx].clone();
-
                     Some(view! {
                         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center"
                             on:click=move |ev| {
-                                let target = ev.target();
-                                let current = ev.current_target();
-                                if target == current { close(); }
+                                if ev.target() == ev.current_target() { close(); }
                             }>
                             <div class="bg-surf3 border border-hl2 rounded-md max-w-3xl w-[94%] \
                                         max-h-[88vh] flex flex-col relative shadow-2xl">
-                                <button
-                                    on:click=move |_| close()
+                                <button on:click=move |_| close()
                                     class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full \
                                         bg-surf border border-hl text-body flex items-center \
-                                        justify-center z-10 hover:text-ink hover:bg-surf2 transition-all"
-                                >
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                                        <path d="M3 3l8 8M11 3l-8 8"/>
-                                    </svg>
+                                        justify-center z-10 hover:text-ink hover:bg-surf2 transition-all">
+                                    <span inner_html=icons::CLOSE />
                                 </button>
 
                                 {if idx > 0 {
-                                    view! {
-                                        <button on:click=move |_| {
-                                            index.set(Some(idx - 1));
-                                        } class="absolute top-1/2 -translate-y-1/2 left-2.5 w-8 h-8 \
-                                                rounded-full bg-navy/70 border border-hl text-body \
-                                                flex items-center justify-center z-10 hover:text-ink \
-                                                hover:bg-navy/90 transition-all">
-                                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                                                <path d="M8.5 3L4 7l4.5 4"/>
-                                            </svg>
-                                        </button>
-                                    }.into_any()
+                                    view! { <button on:click=move |_| index.set(Some(idx - 1))
+                                        class="absolute top-1/2 -translate-y-1/2 left-2.5 w-8 h-8 \
+                                            rounded-full bg-navy/70 border border-hl text-body \
+                                            flex items-center justify-center z-10 hover:text-ink \
+                                            hover:bg-navy/90 transition-all">
+                                        <span inner_html=icons::CHEVRON_LEFT />
+                                    </button> }.into_any()
                                 } else { ().into_any() }}
 
                                 {if idx + 1 < total {
-                                    view! {
-                                        <button on:click=move |_| {
-                                            index.set(Some(idx + 1));
-                                        } class="absolute top-1/2 -translate-y-1/2 right-2.5 w-8 h-8 \
-                                                rounded-full bg-navy/70 border border-hl text-body \
-                                                flex items-center justify-center z-10 hover:text-ink \
-                                                hover:bg-navy/90 transition-all">
-                                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                                                <path d="M5.5 3L10 7l-4.5 4"/>
-                                            </svg>
-                                        </button>
-                                    }.into_any()
+                                    view! { <button on:click=move |_| index.set(Some(idx + 1))
+                                        class="absolute top-1/2 -translate-y-1/2 right-2.5 w-8 h-8 \
+                                            rounded-full bg-navy/70 border border-hl text-body \
+                                            flex items-center justify-center z-10 hover:text-ink \
+                                            hover:bg-navy/90 transition-all">
+                                        <span inner_html=icons::CHEVRON_RIGHT />
+                                    </button> }.into_any()
                                 } else { ().into_any() }}
 
                                 <div class="flex-1 overflow-y-auto px-12 py-5 flex flex-col items-center gap-3">
-                                    <div class="w-full min-h-[200px] rounded-sm flex items-center justify-center \
-                                                bg-navy/30 text-body text-sm">
+                                    <div class="w-full min-h-[200px] rounded-sm flex items-center \
+                                                justify-center bg-navy/30 text-body text-sm">
                                         {item.original_name.clone()}
                                     </div>
                                     <div class="flex flex-wrap items-center justify-center gap-3 w-full py-1">
-                                        <span class="text-body font-medium text-sm">
-                                            {format!("{}/{}", idx + 1, total)}
-                                        </span>
+                                        <span class="text-body font-medium text-sm">{format!("{}/{}", idx + 1, total)}</span>
                                         <span class="text-ink font-medium text-sm">{item.original_name.clone()}</span>
                                         <span class="text-mute text-xs">{item.created_at.clone()}</span>
                                     </div>
                                     <div class="flex gap-4 pb-1">
-                                        <button
-                                            on:click=move |_| {
-                                                if let Some(t) = toast {
-                                                    t.set(tr(I18nKey::ToastSaved).into());
-                                                    let t2 = t;
-                                                    spawn_local(async move {
-                                                        TimeoutFuture::new(3000).await;
-                                                        t2.set(String::new());
-                                                    });
-                                                }
+                                        <button on:click=move |_| {
+                                            if let Some(t) = toast {
+                                                t.set(tr(I18nKey::ToastSaved).into());
+                                                let t2 = t;
+                                                spawn_local(async move {
+                                                    TimeoutFuture::new(3000).await;
+                                                    t2.set(String::new());
+                                                });
                                             }
-                                            class="bg-none border-none text-gold opacity-50 cursor-pointer \
-                                                text-sm flex items-center gap-1 hover:opacity-100 transition-opacity"
-                                        >
+                                        } class="bg-none border-none text-gold opacity-50 cursor-pointer \
+                                            text-sm flex items-center gap-1 hover:opacity-100 transition-opacity">
                                             {tr(I18nKey::ModalSave)}
                                         </button>
-                                        <button
-                                            on:click=move |_| {
-                                                if let Some(t) = toast {
-                                                    t.set(tr(I18nKey::ToastDeleted).into());
-                                                    let t2 = t;
-                                                    spawn_local(async move {
-                                                        TimeoutFuture::new(3000).await;
-                                                        t2.set(String::new());
-                                                    });
-                                                }
-                                                close();
+                                        <button on:click=move |_| {
+                                            if let Some(t) = toast {
+                                                t.set(tr(I18nKey::ToastDeleted).into());
+                                                let t2 = t;
+                                                spawn_local(async move {
+                                                    TimeoutFuture::new(3000).await;
+                                                    t2.set(String::new());
+                                                });
                                             }
-                                            class="bg-none border-none text-danger opacity-50 cursor-pointer \
-                                                text-sm flex items-center gap-1 hover:opacity-100 transition-opacity"
-                                        >
+                                            close();
+                                        } class="bg-none border-none text-danger opacity-50 cursor-pointer \
+                                            text-sm flex items-center gap-1 hover:opacity-100 transition-opacity">
                                             {tr(I18nKey::ModalDelete)}
                                         </button>
                                     </div>
@@ -128,29 +99,15 @@ pub fn PhotoModal(
                                     {items.iter().enumerate().map(|(i, ph)| {
                                         let is_active = i == idx;
                                         view! {
-                                            <div
-                                                on:click=move |_| index.set(Some(i))
+                                            <div on:click=move |_| index.set(Some(i))
                                                 class="w-9 h-9 rounded border cursor-pointer shrink-0 \
                                                     overflow-hidden transition-colors duration-200 \
                                                     flex items-center justify-center bg-navy/30"
                                                 class:border-gold=is_active
-                                                class:border-transparent=!is_active
-                                            >
-                                                {if ph.mime_type.starts_with("video") {
-                                                    view! {
-                                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" class="text-body">
-                                                            <polygon points="3,2 10,6 3,10"/>
-                                                        </svg>
-                                                    }.into_any()
-                                                } else {
-                                                    view! {
-                                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" class="text-body">
-                                                            <rect x="2" y="2.5" width="8" height="7" rx="1"/>
-                                                            <circle cx="5" cy="5.5" r="1.5"/>
-                                                            <path d="M2 8.5l3-3 2 2 2-1.5 3 2.5"/>
-                                                        </svg>
-                                                    }.into_any()
-                                                }}
+                                                class:border-transparent=!is_active>
+                                                <span inner_html={
+                                                    if ph.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }
+                                                } />
                                             </div>
                                         }
                                     }).collect::<Vec<_>>()}

@@ -4,6 +4,7 @@ use wasm_bindgen::JsCast;
 
 use crate::i18n::*;
 use crate::utils::api;
+use crate::utils::icons;
 
 #[allow(non_snake_case)]
 #[component]
@@ -58,12 +59,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
         <div class="border border-dashed border-hl2 rounded-md p-5 \
                     flex items-center gap-4 flex-wrap transition-all \
                     hover:border-gold hover:bg-goldsoft">
-            <span class="text-gold/30">
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                    <path d="M11 3.5v10M6.5 9.5L11 5l4.5 4.5"/>
-                    <path d="M3.5 15v2a2 2 0 002 2h11a2 2 0 002-2v-2"/>
-                </svg>
-            </span>
+            <span class="text-gold/30" inner_html=icons::UPLOAD />
             <div class="flex-1 min-w-[170px]">
                 <h3 class="text-sm font-normal text-ink">{tr(I18nKey::UploadHint)}</h3>
                 <p class="text-xs text-mute mt-0.5">{tr(I18nKey::UploadFormats)}</p>

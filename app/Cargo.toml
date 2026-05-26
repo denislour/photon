@@ -18,7 +18,7 @@ web-sys = { version = "0.3", features = [
     "HtmlLabelElement", "Storage", "File", "Blob", "FileList",
 ] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "multipart"] }
-gloo-timers = { version = "0.3", features = ["futures"] }
+gloo-timers = { version = "0.4", features = ["futures"] }
 
 [profile.release]
 opt-level = "z"

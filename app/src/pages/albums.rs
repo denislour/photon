@@ -2,6 +2,7 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use crate::i18n::*;
+use crate::utils::icons;
 use crate::utils::api;
 
 #[allow(non_snake_case)]
@@ -66,11 +67,7 @@ pub fn AlbumsPage() -> impl IntoView {
                         <div class="border border-hl rounded-sm p-4 text-center cursor-pointer \
                                     bg-transparent hover:border-hl2 hover:bg-surf transition-all duration-150">
                             <div class="w-9 h-9 rounded-full mx-auto mb-2 flex items-center justify-center \
-                                        bg-surf text-gold/60">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                                    <path d="M2 4.5v8a1 1 0 001 1h10a1 1 0 001-1V6a1 1 0 00-1-1H8.5L7 3.5H3a1 1 0 00-1 1z"/>
-                                </svg>
-                            </div>
+                                        bg-surf text-gold/60" inner_html=icons::FOLDER />
                             <div class="text-sm font-semibold text-ink">{album.name}</div>
                             <div class="text-[11px] text-body/70 mt-0.5">{tr(I18nKey::AlbumLabel)}</div>
                         </div>
@@ -82,9 +79,7 @@ pub fn AlbumsPage() -> impl IntoView {
                     on:click=move |_| { new_name.set(String::new()); show_modal.set(true); }>
                     <div class="w-9 h-9 rounded-full mx-auto mb-2 flex items-center justify-center \
                                 bg-transparent border border-dashed border-hl2 text-gold/25">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                            <path d="M8 3v10M3 8h10"/>
-                        </svg>
+                        <span inner_html=icons::PLUS />
                     </div>
                     <div class="text-sm font-semibold text-ink">{tr(I18nKey::CreateAlbum)}</div>
                     <div class="text-[11px] text-body/70 mt-0.5">{tr(I18nKey::AlbumNew)}</div>
