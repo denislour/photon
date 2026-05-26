@@ -4,14 +4,14 @@ use wasm_bindgen_futures::JsFuture;
 
 /// In dev mode (trunk serve), the API is on a different port.
 /// In production (single worker), it's on the same origin.
-fn api_base() -> String {
+fn api_url(path: &str) -> String {
     let loc = web_sys::window().unwrap().location();
     let host = loc.host().unwrap_or_default();
     // If running on trunk serve port (3000), redirect API to wrangler port (8000)
     if host.ends_with(":3000") || host.ends_with(":3000/") {
-        "http://localhost:8000".into()
+        format!("http://localhost:8000{path}")
     } else {
-        String::new()
+        path.to_string()
     }
 }
 
@@ -64,7 +64,7 @@ pub struct UploadResponse {
 }
 
 pub async fn fetch_media() -> Result<Vec<MediaItem>, String> {
-    let url = format!("{}api/media", api_base());
+    let url = api_url("/api/media");
     let resp = reqwest::Client::new()
         .get(&url)
         .send()
@@ -82,7 +82,7 @@ pub async fn fetch_media() -> Result<Vec<MediaItem>, String> {
 pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> {
     let file_name = file.name();
     let file_mime = file.type_();
-    let url = format!("{}api/media", api_base());
+    let url = api_url("/api/media");
     web_sys::console::log_1(&JsValue::from(format!("[API] upload: {file_name} ({file_mime}) -> {url}")));
 
     let form_data = web_sys::FormData::new().map_err(|e| format!("FormData error: {:?}", e))?;
@@ -122,7 +122,7 @@ pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> 
 }
 
 pub async fn fetch_albums() -> Result<Vec<Album>, String> {
-    let url = format!("{}api/albums", api_base());
+    let url = api_url("/api/albums");
     let resp = reqwest::Client::new()
         .get(&url)
         .send()
@@ -138,7 +138,7 @@ pub async fn fetch_albums() -> Result<Vec<Album>, String> {
 }
 
 pub async fn create_album(name: &str, description: Option<String>) -> Result<Album, String> {
-    let url = format!("{}api/albums", api_base());
+    let url = api_url("/api/albums");
     let body = CreateAlbumBody {
         name: name.into(),
         description,
