@@ -4,9 +4,11 @@ use axum::{Router, routing::{get, post, delete}};
 use tower_service::Service;
 use worker::*;
 
+mod albums;
 mod db;
 mod error;
 mod media;
+mod search;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -42,6 +44,10 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> Result<http::Respon
         .route("/api/media", get(media::route::list))
         .route("/api/media/{id}", get(media::route::serve))
         .route("/api/media/{id}", delete(media::route::delete))
+        .route("/api/albums", post(albums::route::create))
+        .route("/api/albums", get(albums::route::list))
+        .route("/api/albums/{id}", get(albums::route::get))
+        .route("/api/search", get(search::route::search))
         .with_state(state);
 
     Ok(app.call(req).await?)
