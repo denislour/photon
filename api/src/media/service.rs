@@ -46,8 +46,8 @@ pub async fn insert(db: &D1Database, media: &Media) -> Result<(), AppError> {
         media.original_name.clone().into(),
         media.mime_type.clone().into(),
         (media.file_size as f64).into(),
-        media.width.unwrap_or(0).into(),
-        media.height.unwrap_or(0).into(),
+        (media.width.unwrap_or(0) as f64).into(),
+        (media.height.unwrap_or(0) as f64).into(),
         media.duration.unwrap_or(0.0).into(),
         media.bucket_path.clone().into(),
     ];
