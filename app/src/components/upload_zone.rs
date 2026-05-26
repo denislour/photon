@@ -11,6 +11,7 @@ use crate::utils::icons;
 pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
     let uploading = RwSignal::new(false);
     let progress = RwSignal::new(0u8);
+    let dragover = RwSignal::new(false);
     let toast = use_context::<RwSignal<String>>();
 
     let handle_file = move |file: web_sys::File| {
@@ -55,10 +56,38 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
         }
     };
 
+    let on_dragover = move |ev: leptos::ev::DragEvent| {
+        ev.prevent_default();
+        dragover.set(true);
+    };
+
+    let on_dragleave = move |_ev: leptos::ev::DragEvent| {
+        dragover.set(false);
+    };
+
+    let on_drop = move |ev: leptos::ev::DragEvent| {
+        ev.prevent_default();
+        dragover.set(false);
+        if let Some(data) = ev.data_transfer() {
+            if let Some(files) = data.files() {
+                if let Some(file) = files.get(0) {
+                    handle_file(file);
+                }
+            }
+        }
+    };
+
     view! {
-        <div class="border border-dashed border-hl2 rounded-md p-5 \
-                    flex items-center gap-4 flex-wrap transition-all \
-                    hover:border-gold hover:bg-goldsoft">
+        <div
+            on:dragover=on_dragover
+            on:dragleave=on_dragleave
+            on:drop=on_drop
+            class="border border-dashed rounded-md p-5 \
+                   flex items-center gap-4 flex-wrap transition-all cursor-pointer"
+            class:border-gold=dragover
+            class:bg-goldsoft=dragover
+            class:border-hl2=move || !dragover.get()
+        >
             <span class="text-gold/30" inner_html=icons::UPLOAD />
             <div class="flex-1 min-w-[170px]">
                 <h3 class="text-sm font-normal text-ink">{tr(I18nKey::UploadHint)}</h3>
