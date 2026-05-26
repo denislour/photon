@@ -106,20 +106,25 @@ pub fn GalleryPage() -> impl IntoView {
             </div>
 
             {move || {
-                let items = media.filtered_items().get();
+                let all_items = media.filtered_items().get();
                 let grid = is_grid();
-                if items.is_empty() {
+
+                if all_items.is_empty() {
                     return view! { <div class="text-center text-body py-20">{tr(I18nKey::EmptyGallery)}</div> }.into_any();
                 }
+
+                let modal = view! { <PhotoModal items=all_items.clone() index=selected /> }.into_any();
+
                 if grid {
                     view! {
                         <div class="columns-4 max-[1080px]:columns-3 max-[740px]:columns-2 max-[440px]:columns-1 gap-2">
-                            {items.into_iter().enumerate().map(|(_gi, item)| {
+                            {all_items.iter().enumerate().map(|(gi, item)| {
+                                let gi = gi;
                                 view! {
                                     <div class="break-inside-avoid mb-2 rounded-sm overflow-hidden cursor-pointer \
                                                 relative bg-surf border border-hl transition-all \
                                                 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/30"
-                                        on:click=move |_| selected.set(Some(_gi))>
+                                        on:click=move |_| selected.set(Some(gi))>
                                         <div class="bg-navy/30 h-32 flex items-center justify-center">
                                             <span class="opacity-40"
                                                 inner_html={if item.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }} />
@@ -137,11 +142,12 @@ pub fn GalleryPage() -> impl IntoView {
                 } else {
                     view! {
                         <div class="flex flex-col gap-2">
-                            {items.into_iter().enumerate().map(|(_gi, item)| {
+                            {all_items.iter().enumerate().map(|(gi, item)| {
+                                let gi = gi;
                                 view! {
                                     <div class="flex items-center gap-3 p-2 rounded-sm cursor-pointer \
                                                 bg-surf border border-hl transition-all hover:border-hl2"
-                                        on:click=move |_| selected.set(Some(_gi))>
+                                        on:click=move |_| selected.set(Some(gi))>
                                         <div class="w-12 h-12 shrink-0 bg-navy/30 rounded flex items-center justify-center">
                                             <span class="opacity-40"
                                                 inner_html={if item.mime_type.starts_with("video") { icons::PLAY } else { icons::IMAGE }} />
@@ -150,16 +156,16 @@ pub fn GalleryPage() -> impl IntoView {
                                             <div class="text-sm font-medium text-ink truncate">{item.original_name.clone()}</div>
                                             <div class="text-xs text-mute">{item.created_at.clone()}</div>
                                         </div>
-                                        <div class="text-[10px] text-body shrink-0">{item.mime_type}</div>
+                                        <div class="text-[10px] text-body shrink-0">{item.mime_type.clone()}</div>
                                     </div>
                                 }
                             }).collect::<Vec<_>>()}
                         </div>
                     }.into_any()
-                }
-            }}
+                };
 
-            <PhotoModal items=media.items().get_untracked() index=selected />
+                modal
+            }}
         </div>
     }
 }
