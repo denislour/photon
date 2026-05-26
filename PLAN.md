@@ -101,24 +101,24 @@ photon/
 
 ## Integration Roadmap
 
-### Phase 1: BE Foundation
-- [ ] Scaffold workers-rs + axum project
-- [ ] D1 schema: `media`, `albums`, `tags`, `media_tags`
-- [ ] R2 bucket binding + storage helper
-- [ ] `AppError` enum with `IntoResponse`
-- [ ] `POST /api/media` — multipart upload, validate MIME+size, save to R2 + D1
-- [ ] `GET /api/media` — paginated list from D1
-- [ ] `GET /api/media/{id}` — stream file from R2
-- [ ] `DELETE /api/media/{id}` — remove from R2 + D1
-- [ ] `POST /api/albums` + `GET /api/albums`
-- [ ] `GET /api/search?q=` — search by name
+### Phase 1: BE Foundation ✅
+- [x] Scaffold workers-rs + axum project
+- [x] D1 schema: `media`, `albums`, `tags`, `media_tags`
+- [x] R2 bucket binding + storage helper
+- [x] `AppError` enum with `IntoResponse`
+- [x] `POST /api/media` — multipart upload, validate MIME+size, save to R2 + D1
+- [x] `GET /api/media` — paginated list from D1
+- [x] `GET /api/media/{id}` — stream file from R2
+- [x] `DELETE /api/media/{id}` — remove from R2 + D1
+- [x] `POST /api/albums` + `GET /api/albums`
+- [x] `GET /api/search?q=` — search by name
 
-### Phase 2: FE Foundation
-- [ ] Scaffold Leptos CSR + Trunk + Tailwind v3
-- [ ] App shell: Router, Header (nav, search, upload btn)
-- [ ] reactive_stores: `AppStore` (theme, view mode), `MediaStore` (items, filter)
-- [ ] API client module with `reqwest`
-- [ ] Tailwind v3 theme colors matching `.docs/design.html`
+### Phase 2: FE Foundation ✅
+- [x] Scaffold Leptos CSR + Trunk + Tailwind v3
+- [x] App shell: Router, Header, pages
+- [x] reactive_stores: `AppStore`, `MediaStore`
+- [x] API client module with `reqwest`
+- [x] Tailwind v3 theme colors matching design
 
 ### Phase 3: Upload Flow
 - [ ] BE: multipart upload handler (verify, persist)
