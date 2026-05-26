@@ -1,0 +1,10 @@
+[build]
+target = "./index.html"
+dist = "./dist"
+public_url = "/"
+
+[build.rust]
+extra_args = ["--target", "wasm32-unknown-unknown"]
+
+[tools]
+tailwindcss = "3"
