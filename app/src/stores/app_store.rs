@@ -7,7 +7,9 @@ pub struct AppStore {
 
 impl AppStore {
     pub fn new() -> Self {
-        Self { view_mode: RwSignal::new("grid".into()) }
+        Self {
+            view_mode: RwSignal::new("grid".into()),
+        }
     }
 
     pub fn view_mode(&self) -> RwSignal<String> {

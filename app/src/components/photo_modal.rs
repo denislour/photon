@@ -20,10 +20,16 @@ fn toggle_fav(id: &str) {
     if let Some(s) = storage {
         let current = s.get_item("photon_favs").ok().flatten().unwrap_or_default();
         let next = if current.contains(id) {
-            current.replace(id, "").replace(",,", ",").trim_matches(',').to_string()
+            current
+                .replace(id, "")
+                .replace(",,", ",")
+                .trim_matches(',')
+                .to_string()
         } else {
             let mut r = current;
-            if !r.is_empty() { r.push(','); }
+            if !r.is_empty() {
+                r.push(',');
+            }
             r.push_str(id);
             r
         };

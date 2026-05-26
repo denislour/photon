@@ -61,7 +61,9 @@ impl MediaStore {
                     let passes_search = if q.trim().is_empty() {
                         true
                     } else {
-                        item.original_name.to_lowercase().contains(&q.to_lowercase())
+                        item.original_name
+                            .to_lowercase()
+                            .contains(&q.to_lowercase())
                     };
                     passes_filter && passes_search
                 })

@@ -1,10 +1,13 @@
-use axum::{extract::{Query, State}, Json};
+use axum::{
+    Json,
+    extract::{Query, State},
+};
 use serde::Deserialize;
 use serde_json::json;
 
 use super::service;
-use crate::error::AppError;
 use crate::AppState;
+use crate::error::AppError;
 
 #[derive(Deserialize)]
 pub struct SearchParams {

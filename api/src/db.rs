@@ -18,17 +18,13 @@ pub async fn init(db: &D1Database) -> Result<(), worker::Error> {
     .run()
     .await?;
 
-    db.prepare(
-        "CREATE INDEX IF NOT EXISTS idx_media_created ON media(created_at DESC)",
-    )
-    .run()
-    .await?;
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_media_created ON media(created_at DESC)")
+        .run()
+        .await?;
 
-    db.prepare(
-        "CREATE INDEX IF NOT EXISTS idx_media_album ON media(album_id)",
-    )
-    .run()
-    .await?;
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_media_album ON media(album_id)")
+        .run()
+        .await?;
 
     db.prepare(
         "CREATE TABLE IF NOT EXISTS albums (

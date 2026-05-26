@@ -8,7 +8,9 @@ use crate::error::AppError;
 pub fn validate_mime(mime: &str) -> Result<(), AppError> {
     match mime {
         "image/jpeg" | "image/png" | "image/webp" | "video/mp4" | "video/quicktime" => Ok(()),
-        _ => Err(AppError::Validation(format!("unsupported mime type: {mime}"))),
+        _ => Err(AppError::Validation(format!(
+            "unsupported mime type: {mime}"
+        ))),
     }
 }
 

@@ -1,17 +1,17 @@
+use axum::body::Body;
+use axum::response::Response as AxumResponse;
 use axum::{
+    Json,
     extract::{Multipart, Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
 };
-use axum::response::Response as AxumResponse;
-use axum::body::Body;
 use serde_json::json;
 
 use super::model::{ListParams, Media};
 use super::service;
-use crate::error::AppError;
 use crate::AppState;
+use crate::error::AppError;
 
 #[worker::send]
 pub async fn upload(
@@ -22,16 +22,25 @@ pub async fn upload(
     let mut file_name = String::from("unknown");
     let mut file_mime = String::from("application/octet-stream");
 
-    while let Some(field) = multipart.next_field().await.map_err(|e| {
-        AppError::Validation(e.to_string())
-    })? {
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| AppError::Validation(e.to_string()))?
+    {
         match field.name() {
             Some("file") => {
                 file_name = field.file_name().unwrap_or("unknown").to_string();
-                file_mime = field.content_type().unwrap_or("application/octet-stream").to_string();
-                file_data = Some(field.bytes().await.map_err(|e| {
-                    AppError::Validation(e.to_string())
-                })?.to_vec());
+                file_mime = field
+                    .content_type()
+                    .unwrap_or("application/octet-stream")
+                    .to_string();
+                file_data = Some(
+                    field
+                        .bytes()
+                        .await
+                        .map_err(|e| AppError::Validation(e.to_string()))?
+                        .to_vec(),
+                );
             }
             _ => {}
         }
@@ -42,7 +51,11 @@ pub async fn upload(
     service::validate_mime(&file_mime)?;
     service::validate_size(data.len(), &file_mime)?;
 
-    let key = format!("{}.{}", service::generate_key(&file_mime), service::extension(&file_mime));
+    let key = format!(
+        "{}.{}",
+        service::generate_key(&file_mime),
+        service::extension(&file_mime)
+    );
     service::upload_r2(&state.storage.0, &key, &data).await?;
 
     let media = Media {
@@ -60,7 +73,10 @@ pub async fn upload(
 
     service::insert(&state.db.0, &media).await?;
 
-    Ok((StatusCode::CREATED, Json(json!({ "id": media.id, "url": format!("/api/media/{}", media.id) }))))
+    Ok((
+        StatusCode::CREATED,
+        Json(json!({ "id": media.id, "url": format!("/api/media/{}", media.id) })),
+    ))
 }
 
 #[worker::send]
@@ -84,8 +100,11 @@ pub async fn serve(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<AxumResponse<Body>, AppError> {
-    let media = service::get(&state.db.0, &id).await?.ok_or(AppError::NotFound)?;
-    let data = service::get_r2(&state.storage.0, &media.bucket_path).await?
+    let media = service::get(&state.db.0, &id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let data = service::get_r2(&state.storage.0, &media.bucket_path)
+        .await?
         .ok_or(AppError::NotFound)?;
 
     let response = AxumResponse::builder()
@@ -102,7 +121,9 @@ pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    let bucket_path = service::delete(&state.db.0, &id).await?.ok_or(AppError::NotFound)?;
+    let bucket_path = service::delete(&state.db.0, &id)
+        .await?
+        .ok_or(AppError::NotFound)?;
     service::delete_r2(&state.storage.0, &bucket_path).await?;
     Ok(StatusCode::NO_CONTENT)
 }

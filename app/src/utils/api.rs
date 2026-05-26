@@ -83,7 +83,9 @@ pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> 
     let url = api_url("/api/media");
 
     let form_data = web_sys::FormData::new().map_err(|e| format!("FormData error: {:?}", e))?;
-    form_data.append_with_blob("file", &file).map_err(|e| format!("append error: {:?}", e))?;
+    form_data
+        .append_with_blob("file", &file)
+        .map_err(|e| format!("append error: {:?}", e))?;
 
     let opts = web_sys::RequestInit::new();
     opts.set_method("POST");
@@ -93,25 +95,28 @@ pub async fn upload_file(file: web_sys::File) -> Result<UploadResponse, String> 
         .map_err(|e| format!("Request init error: {:?}", e))?;
 
     let promise = web_sys::window().unwrap().fetch_with_request(&request);
-    let resp = JsFuture::from(promise).await
+    let resp = JsFuture::from(promise)
+        .await
         .map_err(|e| format!("fetch error: {:?}", e))?;
     let resp = resp.unchecked_into::<web_sys::Response>();
     let status = resp.status();
 
     if status != 201 {
         let text_promise = resp.text().map_err(|e| format!("text error: {:?}", e))?;
-        let text = JsFuture::from(text_promise).await
+        let text = JsFuture::from(text_promise)
+            .await
             .map_err(|e| format!("text await error: {:?}", e))?;
         let text = text.as_string().unwrap_or_default();
         return Err(text);
     }
 
     let json_promise = resp.json().map_err(|e| format!("json error: {:?}", e))?;
-    let json_val = JsFuture::from(json_promise).await
+    let json_val = JsFuture::from(json_promise)
+        .await
         .map_err(|e| format!("json await error: {:?}", e))?;
 
-    let result: UploadResponse = serde_wasm_bindgen::from_value(json_val)
-        .map_err(|e| format!("deserialize error: {e}"))?;
+    let result: UploadResponse =
+        serde_wasm_bindgen::from_value(json_val).map_err(|e| format!("deserialize error: {e}"))?;
 
     Ok(result)
 }

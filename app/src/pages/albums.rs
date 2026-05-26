@@ -2,8 +2,8 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use crate::i18n::*;
-use crate::utils::icons;
 use crate::utils::api;
+use crate::utils::icons;
 
 #[allow(non_snake_case)]
 #[component]
@@ -25,7 +25,9 @@ pub fn AlbumsPage() -> impl IntoView {
 
     let create = move || {
         let name = new_name.get();
-        if name.trim().is_empty() { return; }
+        if name.trim().is_empty() {
+            return;
+        }
         spawn_local(async move {
             match api::create_album(&name, None).await {
                 Ok(_) => {
@@ -34,7 +36,10 @@ pub fn AlbumsPage() -> impl IntoView {
                     if let Some(t) = toast {
                         t.set(format!("{} \"{name}\"", tr(I18nKey::AlbumCreateSuccess)));
                         let t2 = t;
-                        set_timeout(move || t2.set(String::new()), std::time::Duration::from_secs(3));
+                        set_timeout(
+                            move || t2.set(String::new()),
+                            std::time::Duration::from_secs(3),
+                        );
                     }
                     load();
                 }
@@ -42,7 +47,10 @@ pub fn AlbumsPage() -> impl IntoView {
                     if let Some(t) = toast {
                         t.set(format!("{}: {e}", tr(I18nKey::UploadError)));
                         let t2 = t;
-                        set_timeout(move || t2.set(String::new()), std::time::Duration::from_secs(4));
+                        set_timeout(
+                            move || t2.set(String::new()),
+                            std::time::Duration::from_secs(4),
+                        );
                     }
                 }
             }

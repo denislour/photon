@@ -1,11 +1,15 @@
 use uuid::Uuid;
-use worker::*;
 use wasm_bindgen::JsValue;
+use worker::*;
 
 use super::model::Album;
 use crate::error::AppError;
 
-pub async fn create(db: &D1Database, name: &str, description: Option<String>) -> Result<Album, AppError> {
+pub async fn create(
+    db: &D1Database,
+    name: &str,
+    description: Option<String>,
+) -> Result<Album, AppError> {
     let id = Uuid::new_v4().to_string();
     let mut values: Vec<JsValue> = vec![id.clone().into(), name.into()];
     let desc_val = description.clone();

@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use axum::{Router, routing::{get, post, delete}};
+use axum::{
+    Router,
+    routing::{delete, get, post},
+};
 use tower_http::cors::CorsLayer;
 use tower_service::Service;
 use worker::*;
@@ -30,7 +33,11 @@ unsafe impl Send for Storage {}
 unsafe impl Sync for Storage {}
 
 #[event(fetch)]
-async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> Result<http::Response<axum::body::Body>> {
+async fn fetch(
+    req: HttpRequest,
+    env: Env,
+    _ctx: Context,
+) -> Result<http::Response<axum::body::Body>> {
     worker::console_log!("[BE] init start");
     let database = env.d1("DB")?;
     let bucket = env.bucket("MEDIA_BUCKET")?;
