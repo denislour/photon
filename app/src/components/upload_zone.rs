@@ -26,7 +26,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                     up.set(false);
                     ou.set(true);
                     if let Some(msg) = t {
-                        msg.set("✅ Đã tải lên".into());
+                        msg.set("Da tai len".into());
                         TimeoutFuture::new(3000).await;
                         msg.set(String::new());
                     }
@@ -34,7 +34,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                 Err(e) => {
                     up.set(false);
                     if let Some(msg) = t {
-                        msg.set(format!("❌ {e}"));
+                        msg.set(format!("Loi: {e}"));
                         TimeoutFuture::new(4000).await;
                         msg.set(String::new());
                     }
@@ -58,19 +58,19 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                     flex items-center gap-4 flex-wrap transition-all \
                     hover:border-gold hover:bg-goldsoft">
             <span class="text-gold/30">
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                     <path d="M11 3.5v10M6.5 9.5L11 5l4.5 4.5"/>
                     <path d="M3.5 15v2a2 2 0 002 2h11a2 2 0 002-2v-2"/>
                 </svg>
             </span>
             <div class="flex-1 min-w-[170px]">
-                <h3 class="text-sm font-normal text-ink">"Kéo thả ảnh, video vào đây"</h3>
-                <p class="text-xs text-mute mt-0.5">"JPEG · PNG · WebP · MP4 · Tối đa 100MB"</p>
+                <h3 class="text-sm font-normal text-ink">"Keo tha anh, video vao day"</h3>
+                <p class="text-xs text-mute mt-0.5">"JPEG . PNG . WebP . MP4 . Toi da 100MB"</p>
             </div>
             <label class="inline-flex items-center gap-1.5 h-8 px-4 rounded-sm \
                           text-xs font-medium bg-gold text-navy \
                           hover:bg-gold/80 transition-all cursor-pointer">
-                "Chọn file"
+                "Chon file"
                 <input type="file"
                     accept="image/*,video/*"
                     on:change=on_change
@@ -85,7 +85,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                                  style:width=format!("{}%", progress.get())></div>
                         </div>
                         <div class="flex justify-between text-[11px] text-mute mt-1">
-                            <span>"Đang tải..."</span>
+                            <span>"Dang tai..."</span>
                             <span>{move || format!("{}%", progress.get())}</span>
                         </div>
                     </div>

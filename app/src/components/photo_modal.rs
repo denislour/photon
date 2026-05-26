@@ -100,7 +100,7 @@ pub fn PhotoModal(
                                         <button
                                             on:click=move |_| {
                                                 if let Some(t) = toast {
-                                                    t.set("✅ Đã lưu".into());
+                                                    t.set("Da luu".into());
                                                     let t2 = t;
                                                     spawn_local(async move {
                                                         TimeoutFuture::new(3000).await;
@@ -111,12 +111,12 @@ pub fn PhotoModal(
                                             class="bg-none border-none text-gold opacity-50 cursor-pointer \
                                                 text-sm flex items-center gap-1 hover:opacity-100 transition-opacity"
                                         >
-                                            {"♡ Lưu"}
+                                            {"Luu"}
                                         </button>
                                         <button
                                             on:click=move |_| {
                                                 if let Some(t) = toast {
-                                                    t.set("🗑 Đã xóa".into());
+                                                    t.set("Da xoa".into());
                                                     let t2 = t;
                                                     spawn_local(async move {
                                                         TimeoutFuture::new(3000).await;
@@ -128,7 +128,7 @@ pub fn PhotoModal(
                                             class="bg-none border-none text-danger opacity-50 cursor-pointer \
                                                 text-sm flex items-center gap-1 hover:opacity-100 transition-opacity"
                                         >
-                                            {"🗑 Xóa"}
+                                            {"Xoa"}
                                         </button>
                                     </div>
                                 </div>
@@ -147,7 +147,7 @@ pub fn PhotoModal(
                                                 class:border-gold=is_active
                                                 class:border-transparent=!is_active
                                             >
-                                                {if ph.mime_type.starts_with("video") { "▶" } else { "🖼" }}
+                                                {if ph.mime_type.starts_with("video") { "[V]" } else { "[I]" }}
                                             </div>
                                         }
                                     }).collect::<Vec<_>>()}

@@ -21,5 +21,5 @@ deploy:
     cd app && trunk build --release
     cd api && npx wrangler deploy
 
-d1-query:
+d1-query query='SELECT name FROM sqlite_master WHERE type="table"':
     cd api && npx wrangler d1 execute photon-db --local --command "{{query}}"

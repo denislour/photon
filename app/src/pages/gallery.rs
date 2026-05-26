@@ -152,7 +152,7 @@ pub fn GalleryPage() -> impl IntoView {
                                                 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-black/30"
                                         on:click=move |_| selected.set(Some(gi))>
                                         <div class="bg-navy/30 h-32 flex items-center justify-center text-body text-xs">
-                                            {if item.mime_type.starts_with("video") { "▶" } else { "🖼" }}
+                                            {if item.mime_type.starts_with("video") { "[V]" } else { "[I]" }}
                                         </div>
                                         <div class="absolute bottom-0 left-0 right-0 pt-9 pb-2.5 px-3 \
                                                     bg-gradient-to-t from-navy/70 to-transparent text-ink">
@@ -176,7 +176,7 @@ pub fn GalleryPage() -> impl IntoView {
                                         on:click=move |_| selected.set(Some(gi))>
                                         <div class="w-12 h-12 shrink-0 bg-navy/30 rounded \
                                                     flex items-center justify-center text-body text-xs">
-                                            {if item.mime_type.starts_with("video") { "▶" } else { "🖼" }}
+                                            {if item.mime_type.starts_with("video") { "[V]" } else { "[I]" }}
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <div class="text-sm font-medium text-ink truncate">{item.original_name.clone()}</div>
