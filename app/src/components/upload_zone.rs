@@ -6,6 +6,21 @@ use crate::i18n::*;
 use crate::utils::api;
 use crate::utils::icons;
 
+const DIV_CLASS: &str = "border border-dashed rounded-md p-5 \
+                          flex items-center gap-4 flex-wrap transition-all cursor-pointer";
+const ICON_CLASS: &str = "text-gold/30";
+const HINT_WRAPPER_CLASS: &str = "flex-1 min-w-[170px]";
+const HINT_TITLE_CLASS: &str = "text-sm font-normal text-ink";
+const HINT_DESC_CLASS: &str = "text-xs text-mute mt-0.5";
+const LABEL_CLASS: &str = "inline-flex items-center gap-1.5 h-8 px-4 rounded-sm \
+                           text-xs font-medium bg-gold text-navy \
+                           hover:bg-gold/80 transition-all cursor-pointer";
+const HIDDEN_CLASS: &str = "hidden";
+const PROGRESS_WRAPPER_CLASS: &str = "w-full";
+const PROGRESS_BAR_TRACK_CLASS: &str = "h-0.5 bg-surf2 rounded overflow-hidden";
+const PROGRESS_BAR_FILL_CLASS: &str = "h-full bg-gold rounded transition-all duration-300";
+const PROGRESS_INFO_CLASS: &str = "flex justify-between text-[11px] text-mute mt-1";
+
 #[allow(non_snake_case)]
 #[component]
 pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
@@ -40,7 +55,8 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                 Err(e) => {
                     up.set(false);
                     if let Some(msg) = t {
-                        msg.set(format!("{}: {e}", tr(I18nKey::UploadError)));
+                        let err = tr(I18nKey::UploadError);
+                        msg.set(format!("{err}: {e}"));
                         TimeoutFuture::new(4000).await;
                         msg.set(String::new());
                     }
@@ -85,37 +101,35 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
             on:dragover=on_dragover
             on:dragleave=on_dragleave
             on:drop=on_drop
-            class="border border-dashed rounded-md p-5 \
-                   flex items-center gap-4 flex-wrap transition-all cursor-pointer"
+            class=DIV_CLASS
             class:border-gold=dragover
             class:bg-goldsoft=dragover
             class:border-hl2=move || !dragover.get()
         >
-            <span class="text-gold/30" inner_html=icons::UPLOAD />
-            <div class="flex-1 min-w-[170px]">
-                <h3 class="text-sm font-normal text-ink">{tr(I18nKey::UploadHint)}</h3>
-                <p class="text-xs text-mute mt-0.5">{tr(I18nKey::UploadFormats)}</p>
+            <span class=ICON_CLASS inner_html=icons::UPLOAD />
+            <div class=HINT_WRAPPER_CLASS>
+                <h3 class=HINT_TITLE_CLASS>{tr(I18nKey::UploadHint)}</h3>
+                <p class=HINT_DESC_CLASS>{tr(I18nKey::UploadFormats)}</p>
             </div>
-            <label class="inline-flex items-center gap-1.5 h-8 px-4 rounded-sm \
-                          text-xs font-medium bg-gold text-navy \
-                          hover:bg-gold/80 transition-all cursor-pointer">
+            <label class=LABEL_CLASS>
                 {tr(I18nKey::UploadButton)}
                 <input type="file"
                     accept="image/*,video/*"
                     on:change=on_change
-                    class="hidden"
+                    class=HIDDEN_CLASS
                 />
             </label>
             {move || uploading.get().then(|| {
+                let pct = progress.get();
                 view! {
-                    <div class="w-full">
-                        <div class="h-0.5 bg-surf2 rounded overflow-hidden">
-                            <div class="h-full bg-gold rounded transition-all duration-300"
-                                 style:width=format!("{}%", progress.get())></div>
+                    <div class=PROGRESS_WRAPPER_CLASS>
+                        <div class=PROGRESS_BAR_TRACK_CLASS>
+                            <div class=PROGRESS_BAR_FILL_CLASS
+                                 style:width=format!("{pct}%")></div>
                         </div>
-                        <div class="flex justify-between text-[11px] text-mute mt-1">
+                        <div class=PROGRESS_INFO_CLASS>
                             <span>{tr(I18nKey::UploadProgress)}</span>
-                            <span>{move || format!("{}%", progress.get())}</span>
+                            <span>{move || { let pct = progress.get(); format!("{pct}%") }}</span>
                         </div>
                     </div>
                 }.into_any()
