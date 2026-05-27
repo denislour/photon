@@ -230,7 +230,10 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                         <div class=CONTENT_AREA>
                             <img src=src alt=item.original_name.clone() class=MODAL_IMG />
                             <div class=META_ROW>
-                                <span class=META_BODY>{format!("{}/{}", idx + 1, total)}</span>
+                                <span class=META_BODY>{
+                                let n = idx + 1;
+                                format!("{n}/{total}")
+                                }</span>
                                 <span class=META_TITLE>{item.original_name.clone()}</span>
                                 <span class=META_DATE>{item.created_at.clone()}</span>
                             </div>
