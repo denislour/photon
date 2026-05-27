@@ -9,14 +9,25 @@ use crate::stores::{AlbumStore, AppCtx, AppStore, MediaStore, ToastStore, Upload
 #[allow(non_snake_case)]
 #[component]
 pub fn App() -> impl IntoView {
+    let app = AppStore::new();
+    let media = MediaStore::new();
+    let album = AlbumStore::new();
+    let upload = UploadStore::new();
+    let toast = ToastStore::new();
+
     let ctx = AppCtx {
-        app: AppStore::new(),
-        media: MediaStore::new(),
-        album: AlbumStore::new(),
-        upload: UploadStore::new(),
-        toast: ToastStore::new(),
+        app,
+        media,
+        album,
+        upload,
+        toast,
     };
     provide_context(ctx);
+    provide_context(app);
+    provide_context(media);
+    provide_context(album);
+    provide_context(upload);
+    provide_context(toast);
 
     view! {
         <Router>
