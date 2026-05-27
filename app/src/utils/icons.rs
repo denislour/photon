@@ -1,5 +1,4 @@
-// All SVG icons centralized here. Each returns &'static str for use in view! macro.
-// Use with: view! { <span inner_html=icon::LOGO /> }
+
 
 pub const LOGO: &str = r#"<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="8,1 15,5 15,11 8,15 1,11 1,5"/></svg>"#;
 
