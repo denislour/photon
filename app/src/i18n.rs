@@ -25,6 +25,10 @@ pub enum I18nKey {
     ModalDelete,
     ToastDeleted,
     AlbumLabel,
+    AddToAlbum,
+    FavSaved,
+    FavUnsaved,
+    AddedToAlbum,
 }
 
 pub fn tr(key: I18nKey) -> &'static str {
@@ -54,5 +58,9 @@ pub fn tr(key: I18nKey) -> &'static str {
         I18nKey::ModalDelete => "Xóa",
         I18nKey::ToastDeleted => "Đã xóa",
         I18nKey::AlbumLabel => "Album",
+        I18nKey::AddToAlbum => "Thêm vào album",
+        I18nKey::FavSaved => "Đã lưu",
+        I18nKey::FavUnsaved => "Đã bỏ lưu",
+        I18nKey::AddedToAlbum => "Đã thêm vào album",
     }
 }
