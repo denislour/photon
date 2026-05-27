@@ -3,7 +3,7 @@ use axum::{
     extract::{Query, State},
 };
 use serde::Deserialize;
-use serde_json::json;
+use serde_json::{Value, json};
 
 use super::service;
 use crate::AppState;
@@ -19,7 +19,7 @@ pub struct SearchParams {
 pub async fn search(
     State(state): State<AppState>,
     Query(params): Query<SearchParams>,
-) -> Result<Json<serde_json::Value>, AppError> {
+) -> Result<Json<Value>, AppError> {
     if params.q.trim().is_empty() {
         return Ok(Json(json!({ "items": [], "query": "" })));
     }
