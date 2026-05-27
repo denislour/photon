@@ -20,5 +20,3 @@ pub const PLUS: &str = r#"<svg width="16" height="16" viewBox="0 0 16 16" fill="
 pub const FOLDER: &str = r#"<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4.5v8a1 1 0 001 1h10a1 1 0 001-1V6a1 1 0 00-1-1H8.5L7 3.5H3a1 1 0 00-1 1z"/></svg>"#;
 
 pub const PLAY: &str = r#"<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="5,2 13,8 5,14"/></svg>"#;
-
-

@@ -54,6 +54,11 @@ struct CreateAlbumBody {
     pub description: Option<String>,
 }
 
+#[derive(Debug, Serialize)]
+struct AssignAlbumBody {
+    pub album_id: String,
+}
+
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
 pub struct UploadResponse {
@@ -158,6 +163,27 @@ pub async fn create_album(name: &str, description: Option<String>) -> Result<Alb
 
     let body: AlbumCreateResponse = resp.json().await.map_err(|e| e.to_string())?;
     Ok(body.album)
+}
+
+pub async fn assign_media_to_album(media_id: &str, album_id: &str) -> Result<(), String> {
+    let url = api_url(&format!("/api/media/{media_id}/album"));
+    let body = AssignAlbumBody {
+        album_id: album_id.into(),
+    };
+
+    let resp = reqwest::Client::new()
+        .put(&url)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !resp.status().is_success() {
+        let text = resp.text().await.map_err(|e| e.to_string())?;
+        return Err(text);
+    }
+
+    Ok(())
 }
 
 fn api_url(path: &str) -> String {
