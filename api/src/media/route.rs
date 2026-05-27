@@ -50,11 +50,9 @@ pub async fn upload(
     service::validate_mime(&file_mime)?;
     service::validate_size(data.len(), &file_mime)?;
 
-    let key = format!(
-        "{}.{}",
-        service::generate_key(&file_mime),
-        service::extension(&file_mime)
-    );
+    let key_base = service::generate_key(&file_mime);
+    let ext = service::extension(&file_mime);
+    let key = format!("{key_base}.{ext}");
     service::upload_r2(&state.storage.0, &key, &data).await?;
 
     let media = Media {
