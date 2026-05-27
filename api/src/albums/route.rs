@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use serde_json::json;
+use serde_json::{Value, json};
 
 use super::model::CreateAlbum;
 use super::service;
@@ -14,7 +14,7 @@ use crate::error::AppError;
 pub async fn create(
     State(state): State<AppState>,
     Json(body): Json<CreateAlbum>,
-) -> Result<(StatusCode, Json<serde_json::Value>), AppError> {
+) -> Result<(StatusCode, Json<Value>), AppError> {
     if body.name.trim().is_empty() {
         return Err(AppError::Validation("name is required".into()));
     }
@@ -24,7 +24,7 @@ pub async fn create(
 }
 
 #[worker::send]
-pub async fn list(State(state): State<AppState>) -> Result<Json<serde_json::Value>, AppError> {
+pub async fn list(State(state): State<AppState>) -> Result<Json<Value>, AppError> {
     let albums = service::list(&state.db.0).await?;
     Ok(Json(json!({ "albums": albums })))
 }
@@ -33,7 +33,7 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<serde_json::Valu
 pub async fn get(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Result<Json<serde_json::Value>, AppError> {
+) -> Result<Json<Value>, AppError> {
     let album = service::get(&state.db.0, &id)
         .await?
         .ok_or(AppError::NotFound)?;
