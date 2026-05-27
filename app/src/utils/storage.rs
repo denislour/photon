@@ -1,5 +1,3 @@
-/// localStorage helpers for favorite media
-
 const STORAGE_KEY: &str = "photon_favs";
 
 pub fn is_faved(id: &str) -> bool {
