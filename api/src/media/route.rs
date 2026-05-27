@@ -72,9 +72,10 @@ pub async fn upload(
 
     service::insert(&state.db.0, &media).await?;
 
+    let id = &media.id;
     Ok((
         StatusCode::CREATED,
-        Json(json!({ "id": media.id, "url": format!("/api/media/{}", media.id) })),
+        Json(json!({ "id": media.id, "url": format!("/api/media/{id}") })),
     ))
 }
 

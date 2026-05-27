@@ -28,7 +28,8 @@ pub fn generate_key(mime: &str) -> String {
         false => "photos",
     };
     let uuid = Uuid::new_v4();
-    format!("{}/{}/{}", prefix, Utc::now().format("%Y/%m"), uuid)
+    let date_path = Utc::now().format("%Y/%m").to_string();
+    format!("{prefix}/{date_path}/{uuid}")
 }
 
 pub fn extension(mime: &str) -> &str {
