@@ -23,8 +23,5 @@ rustc-ice-*.txt
 app/dist/
 api/build/
 
-# Local agent skills
-.pi/
-
 # macOS
 .DS_Store
