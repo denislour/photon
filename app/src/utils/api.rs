@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
-/// Generate URL for media file, handling dev (different port) and prod (same origin)
+
 pub fn media_url(id: &str) -> String {
     let loc = web_sys::window().unwrap().location();
     let host = loc.host().unwrap_or_default();
@@ -75,7 +75,8 @@ pub async fn fetch_media() -> Result<Vec<MediaItem>, String> {
         .map_err(|e| e.to_string())?;
 
     if !resp.status().is_success() {
-        return Err(format!("HTTP {}", resp.status()));
+        let status = resp.status();
+        return Err(format!("HTTP {status}"));
     }
 
     let body: MediaListResponse = resp.json().await.map_err(|e| e.to_string())?;
@@ -135,7 +136,8 @@ pub async fn fetch_albums() -> Result<Vec<Album>, String> {
         .map_err(|e| e.to_string())?;
 
     if !resp.status().is_success() {
-        return Err(format!("HTTP {}", resp.status()));
+        let status = resp.status();
+        return Err(format!("HTTP {status}"));
     }
 
     let body: AlbumListResponse = resp.json().await.map_err(|e| e.to_string())?;
