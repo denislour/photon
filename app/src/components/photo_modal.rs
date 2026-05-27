@@ -7,7 +7,6 @@ use crate::utils::api::{self, Album, MediaItem};
 use crate::utils::icons;
 use crate::utils::storage;
 
-// ── Class constants ──
 const OVERLAY: &str = "\
     fixed inset-0 bg-black/60 backdrop-blur-sm \
     z-40 flex items-center justify-center";
@@ -31,9 +30,13 @@ const NAV_BTN_R: &str = "\
     bg-navy/70 border border-hl text-body flex items-center \
     justify-center z-10 hover:text-ink hover:bg-navy/90 transition-all";
 
-const ACTION_BTN: &str = "
+const ACTION_BTN: &str = "\
     bg-none border-none cursor-pointer text-sm \
     flex items-center gap-1 transition-opacity";
+
+const DELETE_BTN: &str = "\
+    bg-none border-none text-danger opacity-50 cursor-pointer \
+    text-sm flex items-center gap-1 hover:opacity-100 transition-opacity";
 
 const ICON_BTN: &str = "\
     bg-none border-none text-xs text-body cursor-pointer \
@@ -49,7 +52,38 @@ const THUMB_WRAP: &str = "\
     overflow-hidden transition-colors duration-200 \
     flex items-center justify-center bg-navy/30";
 
-// ── Toast helper ──
+const THUMB_IMG: &str = "w-full h-full object-cover";
+
+const PICKER_PANEL: &str = "\
+    absolute bottom-full mb-1 left-0 bg-surf3 border border-hl2 \
+    rounded-sm shadow-xl min-w-[160px] max-h-[180px] overflow-y-auto z-20";
+
+const PICKER_ICON: &str = "\
+    w-4 h-4 flex items-center justify-center text-gold/50";
+
+const CONTENT_AREA: &str = "\
+    flex-1 overflow-y-auto px-12 py-5 flex flex-col items-center gap-3";
+
+const MODAL_IMG: &str = "\
+    w-full min-h-[200px] rounded-sm object-contain bg-navy/30";
+
+const META_ROW: &str = "\
+    flex flex-wrap items-center justify-center gap-3 w-full py-1";
+
+const META_BODY: &str = "text-body font-medium text-sm";
+
+const META_TITLE: &str = "text-ink font-medium text-sm";
+
+const META_DATE: &str = "text-mute text-xs";
+
+const ACTION_ROW: &str = "flex gap-4 pb-1 items-center";
+
+const RELATIVE: &str = "relative";
+
+const STRIP: &str = "\
+    flex gap-1.5 px-4 pb-3.5 pt-2.5 overflow-x-auto \
+    justify-center border-t border-hl";
+
 fn show_toast(toast: Option<RwSignal<String>>, msg: String, ms: u32) {
     if let Some(t) = toast {
         t.set(msg);
@@ -61,16 +95,14 @@ fn show_toast(toast: Option<RwSignal<String>>, msg: String, ms: u32) {
     }
 }
 
-// ── Media thumbnail helper ──
 fn media_thumb(mime_type: String, url: String) -> impl IntoView {
     if mime_type.starts_with("video") {
         view! { <span inner_html=icons::PLAY /> }.into_any()
     } else {
-        view! { <img src=url alt="" class="w-full h-full object-cover" /> }.into_any()
+        view! { <img src=url alt="" class=THUMB_IMG /> }.into_any()
     }
 }
 
-// ── Album picker sub-component ──
 #[allow(non_snake_case)]
 #[component]
 fn AlbumPickerModal(
@@ -81,8 +113,7 @@ fn AlbumPickerModal(
     on_close: std::rc::Rc<dyn Fn()>,
 ) -> impl IntoView {
     view! {
-        <div class="absolute bottom-full mb-1 left-0 bg-surf3 border border-hl2 \
-                    rounded-sm shadow-xl min-w-[160px] max-h-[180px] overflow-y-auto z-20">
+        <div class=PICKER_PANEL>
             {albums.into_iter().map(|album| {
                 let aid = album.id.clone();
                 let aname = album.name.clone();
@@ -91,6 +122,8 @@ fn AlbumPickerModal(
                 let mname = media_name.clone();
                 let t = toast;
                 let oc = on_close.clone();
+                let added = tr(I18nKey::AddedToAlbum);
+                let err_label = tr(I18nKey::UploadError);
                 view! {
                     <button on:click=move |_| {
                         let aid = aid.clone();
@@ -101,20 +134,19 @@ fn AlbumPickerModal(
                             match api::assign_media_to_album(&mid, &aid).await {
                                 Ok(_) => show_toast(
                                     t,
-                                    format!("{} \"{}\" -> \"{}\"", tr(I18nKey::AddedToAlbum), mname, aname),
+                                    format!("{added} \"{mname}\" -> \"{aname}\""),
                                     3000,
                                 ),
                                 Err(e) => show_toast(
                                     t,
-                                    format!("{}: {e}", tr(I18nKey::UploadError)),
+                                    format!("{err_label}: {e}"),
                                     4000,
                                 ),
                             }
                         });
                         oc();
                     } class=PICKER_ITEM>
-                        <span class="w-4 h-4 flex items-center justify-center text-gold/50"
-                            inner_html=icons::FOLDER />
+                        <span class=PICKER_ICON inner_html=icons::FOLDER />
                         {display}
                     </button>
                 }
@@ -123,7 +155,6 @@ fn AlbumPickerModal(
     }
 }
 
-// ── Main component ──
 #[allow(non_snake_case)]
 #[component]
 pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl IntoView {
@@ -162,7 +193,6 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
             let item = items[idx].clone();
             let src = api::media_url(&item.id);
 
-            // ── Event handlers ──
             let on_fav = {
                 let fid = item.id.clone();
                 move |_| {
@@ -200,7 +230,6 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                 move || sp.set(false)
             };
 
-            // ── View ──
             Some(view! {
                 <div class=OVERLAY on:click=on_overlay>
                     <div class=PANEL>
@@ -226,28 +255,24 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                             }.into_any()
                         } else { ().into_any() }}
 
-                        <div class="flex-1 overflow-y-auto px-12 py-5 flex flex-col items-center gap-3">
-                            <img src=src alt=item.original_name.clone()
-                                class="w-full min-h-[200px] rounded-sm object-contain bg-navy/30"
-                            />
-                            <div class="flex flex-wrap items-center justify-center gap-3 w-full py-1">
-                                <span class="text-body font-medium text-sm">{format!("{}/{}", idx + 1, total)}</span>
-                                <span class="text-ink font-medium text-sm">{item.original_name.clone()}</span>
-                                <span class="text-mute text-xs">{item.created_at.clone()}</span>
+                        <div class=CONTENT_AREA>
+                            <img src=src alt=item.original_name.clone() class=MODAL_IMG />
+                            <div class=META_ROW>
+                                <span class=META_BODY>{format!("{}/{}", idx + 1, total)}</span>
+                                <span class=META_TITLE>{item.original_name.clone()}</span>
+                                <span class=META_DATE>{item.created_at.clone()}</span>
                             </div>
 
-                            <div class="flex gap-4 pb-1 items-center">
+                            <div class=ACTION_ROW>
                                 <button on:click=on_fav class=ACTION_BTN>
                                     {if storage::is_faved(&item.id) { "★" } else { "☆" }}
                                 </button>
 
-                                <button on:click=on_delete
-                                    class="bg-none border-none text-danger opacity-50 cursor-pointer \
-                                           text-sm flex items-center gap-1 hover:opacity-100 transition-opacity">
+                                <button on:click=on_delete class=DELETE_BTN>
                                     {tr(I18nKey::ModalDelete)}
                                 </button>
 
-                                <div class="relative">
+                                <div class=RELATIVE>
                                     <button on:click=on_picker_toggle class=ICON_BTN>
                                         <span inner_html=icons::FOLDER />
                                         {tr(I18nKey::AddToAlbum)}
@@ -270,8 +295,7 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                             </div>
                         </div>
 
-                        <div class="flex gap-1.5 px-4 pb-3.5 pt-2.5 overflow-x-auto \
-                                    justify-center border-t border-hl">
+                        <div class=STRIP>
                             {items.iter().enumerate().map(|(i, ph)| {
                                 let is_active = i == idx;
                                 let thumb_src = api::media_url(&ph.id);
