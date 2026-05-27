@@ -1,3 +1,4 @@
+use gloo_timers::future::TimeoutFuture;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
@@ -36,10 +37,10 @@ pub fn AlbumsPage() -> impl IntoView {
                     if let Some(t) = toast {
                         t.set(format!("{} \"{name}\"", tr(I18nKey::AlbumCreateSuccess)));
                         let t2 = t;
-                        set_timeout(
-                            move || t2.set(String::new()),
-                            std::time::Duration::from_secs(3),
-                        );
+                        spawn_local(async move {
+                            TimeoutFuture::new(3000).await;
+                            t2.set(String::new());
+                        });
                     }
                     load();
                 }
@@ -47,10 +48,10 @@ pub fn AlbumsPage() -> impl IntoView {
                     if let Some(t) = toast {
                         t.set(format!("{}: {e}", tr(I18nKey::UploadError)));
                         let t2 = t;
-                        set_timeout(
-                            move || t2.set(String::new()),
-                            std::time::Duration::from_secs(4),
-                        );
+                        spawn_local(async move {
+                            TimeoutFuture::new(4000).await;
+                            t2.set(String::new());
+                        });
                     }
                 }
             }
