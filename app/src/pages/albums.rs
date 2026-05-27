@@ -1,8 +1,8 @@
-use gloo_timers::future::TimeoutFuture;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use crate::i18n::*;
+use crate::stores::{AlbumStore, ToastStore};
 use crate::utils::api;
 use crate::utils::icons;
 
@@ -34,52 +34,26 @@ const CONFIRM_BTN: &str =
 #[allow(non_snake_case)]
 #[component]
 pub fn AlbumsPage() -> impl IntoView {
-    let albums = RwSignal::new(Vec::<api::Album>::new());
-    let show_modal = RwSignal::new(false);
-    let new_name = RwSignal::new(String::new());
-    let toast = use_context::<RwSignal<String>>();
-
-    let load = move || {
-        spawn_local(async move {
-            if let Ok(list) = api::fetch_albums().await {
-                albums.set(list);
-            }
-        });
-    };
-
-    load();
+    let album = expect_context::<AlbumStore>();
+    let toast = expect_context::<ToastStore>();
 
     let create = move || {
-        let name = new_name.get();
+        let name = album.new_name().get();
         if name.trim().is_empty() {
             return;
         }
         spawn_local(async move {
             match api::create_album(&name, None).await {
                 Ok(_) => {
-                    show_modal.set(false);
-                    new_name.set(String::new());
-                    if let Some(t) = toast {
-                        let success = tr(I18nKey::AlbumCreateSuccess);
-                        t.set(format!("{success} \"{name}\""));
-                        let t2 = t;
-                        spawn_local(async move {
-                            TimeoutFuture::new(3000).await;
-                            t2.set(String::new());
-                        });
-                    }
-                    load();
+                    album.set_show_modal(false);
+                    album.set_new_name("");
+                    let success = tr(I18nKey::AlbumCreateSuccess);
+                    toast.show(&format!("{success} \"{name}\""), 3000);
+                    album.load();
                 }
                 Err(e) => {
-                    if let Some(t) = toast {
-                        let err = tr(I18nKey::UploadError);
-                        t.set(format!("{err}: {e}"));
-                        let t2 = t;
-                        spawn_local(async move {
-                            TimeoutFuture::new(4000).await;
-                            t2.set(String::new());
-                        });
-                    }
+                    let err = tr(I18nKey::UploadError);
+                    toast.show(&format!("{err}: {e}"), 4000);
                 }
             }
         });
@@ -90,7 +64,7 @@ pub fn AlbumsPage() -> impl IntoView {
             <div class=HEADER_ROW>
                 <h2 class=HEADING>{tr(I18nKey::AlbumsTitle)}</h2>
                 <button
-                    on:click=move |_| { new_name.set(String::new()); show_modal.set(true); }
+                    on:click=move |_| { album.set_new_name(""); album.set_show_modal(true); }
                     class=CREATE_BTN
                 >
                     {let create = tr(I18nKey::CreateAlbum); format!("+ {create}")}
@@ -98,18 +72,18 @@ pub fn AlbumsPage() -> impl IntoView {
             </div>
 
             <div class=GRID style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr))">
-                {move || albums.get().into_iter().map(|album| {
+                {move || album.items().get().into_iter().map(|a| {
                     view! {
                         <div class=CARD>
                             <div class=CARD_ICON inner_html=icons::FOLDER />
-                            <div class=CARD_NAME>{album.name}</div>
+                            <div class=CARD_NAME>{a.name}</div>
                             <div class=CARD_LABEL>{tr(I18nKey::AlbumLabel)}</div>
                         </div>
                     }
                 }).collect_view()}
 
                 <div class=ADD_CARD
-                    on:click=move |_| { new_name.set(String::new()); show_modal.set(true); }>
+                    on:click=move |_| { album.set_new_name(""); album.set_show_modal(true); }>
                     <div class=ADD_ICON>
                         <span inner_html=icons::PLUS />
                     </div>
@@ -119,29 +93,29 @@ pub fn AlbumsPage() -> impl IntoView {
             </div>
         </div>
 
-        {move || show_modal.get().then(|| {
+        {move || album.show_modal().get().then(|| {
             view! {
                 <div class=MODAL_OVERLAY
                     on:click=move |ev| {
                         if ev.target() == ev.current_target() {
-                            show_modal.set(false);
+                            album.set_show_modal(false);
                         }
                     }>
                     <div class=MODAL_BOX>
                         <h3 class=MODAL_TITLE>{tr(I18nKey::CreateAlbum)}</h3>
                         <label class=MODAL_LABEL>{tr(I18nKey::AlbumNamePlaceholder)}</label>
                         <input type="text"
-                            prop:value=move || new_name.get()
+                            prop:value=move || album.new_name().get()
                             on:input=move |ev| {
                                 let input = event_target::<web_sys::HtmlInputElement>(&ev);
-                                new_name.set(input.value());
+                                album.set_new_name(&input.value());
                             }
                             class=MODAL_INPUT
                             placeholder={tr(I18nKey::AlbumNamePlaceholder)}
                         />
                         <div class=BTN_ROW>
                             <button
-                                on:click=move |_| show_modal.set(false)
+                                on:click=move |_| album.set_show_modal(false)
                                 class=CANCEL_BTN
                             >
                                 {tr(I18nKey::ModalClose)}

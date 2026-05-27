@@ -4,7 +4,7 @@ use leptos_router::path;
 
 use crate::components::{Header, Toast};
 use crate::pages::{AlbumsPage, GalleryPage};
-use crate::stores::{AppCtx, AppStore, MediaStore};
+use crate::stores::{AlbumStore, AppCtx, AppStore, MediaStore, ToastStore, UploadStore};
 
 #[allow(non_snake_case)]
 #[component]
@@ -12,11 +12,11 @@ pub fn App() -> impl IntoView {
     let ctx = AppCtx {
         app: AppStore::new(),
         media: MediaStore::new(),
+        album: AlbumStore::new(),
+        upload: UploadStore::new(),
+        toast: ToastStore::new(),
     };
     provide_context(ctx);
-
-    let toast_message: RwSignal<String> = RwSignal::new(String::new());
-    provide_context(toast_message);
 
     view! {
         <Router>
@@ -27,7 +27,7 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("albums") view=AlbumsPage />
                 </Routes>
             </main>
-            <Toast message=toast_message />
+            <Toast />
         </Router>
     }
 }

@@ -3,7 +3,7 @@ use leptos::task::spawn_local;
 
 use crate::components::{PhotoModal, UploadZone};
 use crate::i18n::*;
-use crate::stores::AppCtx;
+use crate::stores::{AppCtx, UploadStore};
 use crate::utils::api;
 use crate::utils::icons;
 
@@ -41,13 +41,13 @@ const LIST_COL: &str = "flex flex-col gap-2";
 #[allow(non_snake_case)]
 #[component]
 pub fn GalleryPage() -> impl IntoView {
-    let AppCtx { app, media } = expect_context();
-    let on_upload = RwSignal::new(false);
+    let AppCtx { app, media, .. } = expect_context();
+    let upload = expect_context::<UploadStore>();
     let selected = RwSignal::new(None::<usize>);
 
     Effect::new(move |_| {
-        if on_upload.get() {
-            on_upload.set(false);
+        if upload.on_upload().get() {
+            upload.set_on_upload(false);
             spawn_local(async move {
                 if let Ok(items) = api::fetch_media().await {
                     media.set_items(items);
@@ -107,7 +107,7 @@ pub fn GalleryPage() -> impl IntoView {
                 <p class=SUBTITLE>{tr(I18nKey::AppSubtitle)}</p>
             </div>
 
-            <div class=UPLOAD_WRAPPER><UploadZone on_upload=on_upload /></div>
+            <div class=UPLOAD_WRAPPER><UploadZone /></div>
 
             <div class=TOOLBAR>
                 {filters.iter().enumerate().map(|(i, f)| {

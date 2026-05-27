@@ -1,8 +1,8 @@
-use gloo_timers::future::TimeoutFuture;
 use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::i18n::*;
+use crate::stores::{ToastStore, UploadStore};
 use crate::utils::api;
 use crate::utils::icons;
 
@@ -23,43 +23,25 @@ const PROGRESS_INFO_CLASS: &str = "flex justify-between text-[11px] text-mute mt
 
 #[allow(non_snake_case)]
 #[component]
-pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
-    let uploading = RwSignal::new(false);
-    let progress = RwSignal::new(0u8);
-    let dragover = RwSignal::new(false);
-    let toast = use_context::<RwSignal<String>>();
+pub fn UploadZone() -> impl IntoView {
+    let upload = expect_context::<UploadStore>();
+    let toast = expect_context::<ToastStore>();
 
     let handle_file = move |file: web_sys::File| {
-        let _name = file.name();
-        let _size = file.size();
-        let _mime = file.type_();
-        uploading.set(true);
-        progress.set(0);
-        let p = progress;
-        let up = uploading;
-        let ou = on_upload;
-        let t = toast;
+        upload.set_uploading(true);
+        upload.set_progress(0);
 
         leptos::task::spawn_local(async move {
             match api::upload_file(file).await {
                 Ok(_resp) => {
-                    p.set(100);
-                    up.set(false);
-                    ou.set(true);
-                    if let Some(msg) = t {
-                        msg.set(tr(I18nKey::UploadSuccess).into());
-                        TimeoutFuture::new(3000).await;
-                        msg.set(String::new());
-                    }
+                    upload.set_progress(100);
+                    upload.set_uploading(false);
+                    upload.set_on_upload(true);
+                    toast.show(tr(I18nKey::UploadSuccess), 3000);
                 }
-                Err(e) => {
-                    up.set(false);
-                    if let Some(msg) = t {
-                        let err = tr(I18nKey::UploadError);
-                        msg.set(format!("{err}: {e}"));
-                        TimeoutFuture::new(4000).await;
-                        msg.set(String::new());
-                    }
+                Err(_e) => {
+                    upload.set_uploading(false);
+                    toast.show(tr(I18nKey::UploadError), 4000);
                 }
             }
         });
@@ -77,16 +59,16 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
 
     let on_dragover = move |ev: leptos::ev::DragEvent| {
         ev.prevent_default();
-        dragover.set(true);
+        upload.set_dragover(true);
     };
 
     let on_dragleave = move |_ev: leptos::ev::DragEvent| {
-        dragover.set(false);
+        upload.set_dragover(false);
     };
 
     let on_drop = move |ev: leptos::ev::DragEvent| {
         ev.prevent_default();
-        dragover.set(false);
+        upload.set_dragover(false);
         if let Some(data) = ev.data_transfer() {
             if let Some(files) = data.files() {
                 if let Some(file) = files.get(0) {
@@ -102,9 +84,9 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
             on:dragleave=on_dragleave
             on:drop=on_drop
             class=DIV_CLASS
-            class:border-gold=dragover
-            class:bg-goldsoft=dragover
-            class:border-hl2=move || !dragover.get()
+            class:border-gold=move || upload.dragover().get()
+            class:bg-goldsoft=move || upload.dragover().get()
+            class:border-hl2=move || !upload.dragover().get()
         >
             <span class=ICON_CLASS inner_html=icons::UPLOAD />
             <div class=HINT_WRAPPER_CLASS>
@@ -119,8 +101,8 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                     class=HIDDEN_CLASS
                 />
             </label>
-            {move || uploading.get().then(|| {
-                let pct = progress.get();
+            {move || upload.uploading().get().then(|| {
+                let pct = upload.progress().get();
                 view! {
                     <div class=PROGRESS_WRAPPER_CLASS>
                         <div class=PROGRESS_BAR_TRACK_CLASS>
@@ -129,7 +111,7 @@ pub fn UploadZone(on_upload: RwSignal<bool>) -> impl IntoView {
                         </div>
                         <div class=PROGRESS_INFO_CLASS>
                             <span>{tr(I18nKey::UploadProgress)}</span>
-                            <span>{move || { let pct = progress.get(); format!("{pct}%") }}</span>
+                            <span>{move || { let pct = upload.progress().get(); format!("{pct}%") }}</span>
                         </div>
                     </div>
                 }.into_any()

@@ -1,8 +1,8 @@
-use gloo_timers::future::TimeoutFuture;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use crate::i18n::*;
+use crate::stores::{AlbumStore, ToastStore};
 use crate::utils::api::{self, Album, MediaItem};
 use crate::utils::icons;
 use crate::utils::storage;
@@ -84,17 +84,6 @@ const STRIP: &str = "\
     flex gap-1.5 px-4 pb-3.5 pt-2.5 overflow-x-auto \
     justify-center border-t border-hl";
 
-fn show_toast(toast: Option<RwSignal<String>>, msg: String, ms: u32) {
-    if let Some(t) = toast {
-        t.set(msg);
-        let t2 = t;
-        spawn_local(async move {
-            TimeoutFuture::new(ms).await;
-            t2.set(String::new());
-        });
-    }
-}
-
 fn media_thumb(mime_type: String, url: String) -> impl IntoView {
     if mime_type.starts_with("video") {
         view! { <span inner_html=icons::PLAY /> }.into_any()
@@ -109,7 +98,6 @@ fn AlbumPickerModal(
     albums: Vec<Album>,
     media_id: String,
     media_name: String,
-    toast: Option<RwSignal<String>>,
     on_close: std::rc::Rc<dyn Fn()>,
 ) -> impl IntoView {
     view! {
@@ -120,7 +108,6 @@ fn AlbumPickerModal(
                 let display = album.name.clone();
                 let mid = media_id.clone();
                 let mname = media_name.clone();
-                let t = toast;
                 let oc = on_close.clone();
                 let added = tr(I18nKey::AddedToAlbum);
                 let err_label = tr(I18nKey::UploadError);
@@ -132,16 +119,14 @@ fn AlbumPickerModal(
                         let mname = mname.clone();
                         spawn_local(async move {
                             match api::assign_media_to_album(&mid, &aid).await {
-                                Ok(_) => show_toast(
-                                    t,
-                                    format!("{added} \"{mname}\" -> \"{aname}\""),
-                                    3000,
-                                ),
-                                Err(e) => show_toast(
-                                    t,
-                                    format!("{err_label}: {e}"),
-                                    4000,
-                                ),
+                                Ok(_) => {
+                                    let toast = expect_context::<ToastStore>();
+                                    toast.show(&format!("{added} \"{mname}\" -> \"{aname}\""), 3000);
+                                }
+                                Err(e) => {
+                                    let toast = expect_context::<ToastStore>();
+                                    toast.show(&format!("{err_label}: {e}"), 4000);
+                                }
                             }
                         });
                         oc();
@@ -158,9 +143,9 @@ fn AlbumPickerModal(
 #[allow(non_snake_case)]
 #[component]
 pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl IntoView {
-    let toast = use_context::<RwSignal<String>>();
+    let album_store = expect_context::<AlbumStore>();
+    let toast = expect_context::<ToastStore>();
     let show_picker = RwSignal::new(false);
-    let albums = RwSignal::new(Vec::<Album>::new());
 
     let close = move || {
         show_picker.set(false);
@@ -173,16 +158,10 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
         }
     };
 
-    let _toggle_picker = move |media_item: &MediaItem| {
+    let _toggle_picker = move |_media_item: &MediaItem| {
         show_picker.set(!show_picker.get());
         if show_picker.get() {
-            let mid = media_item.id.clone();
-            spawn_local(async move {
-                if let Ok(list) = api::fetch_albums().await {
-                    albums.set(list);
-                }
-                let _ = mid;
-            });
+            album_store.load();
         }
     };
 
@@ -202,14 +181,13 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                     } else {
                         tr(I18nKey::FavUnsaved)
                     };
-                    show_toast(toast, msg.into(), 3000);
+                    toast.show(msg, 3000);
                 }
             };
 
             let on_delete = {
-                let t = toast;
                 move |_| {
-                    show_toast(t, tr(I18nKey::ToastDeleted).into(), 3000);
+                    toast.show(tr(I18nKey::ToastDeleted), 3000);
                     close();
                 }
             };
@@ -217,11 +195,7 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
             let on_picker_toggle = move |_| {
                 show_picker.set(!show_picker.get());
                 if show_picker.get() {
-                    spawn_local(async move {
-                        if let Ok(list) = api::fetch_albums().await {
-                            albums.set(list);
-                        }
-                    });
+                    album_store.load();
                 }
             };
 
@@ -278,7 +252,7 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                         {tr(I18nKey::AddToAlbum)}
                                     </button>
                                     {move || show_picker.get().then(|| {
-                                        let al = albums.get();
+                                        let al = album_store.items().get();
                                         let mid = item.id.clone();
                                         let mn = item.original_name.clone();
                                         view! {
@@ -286,7 +260,6 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                                 albums=al
                                                 media_id=mid
                                                 media_name=mn
-                                                toast=toast
                                                 on_close=std::rc::Rc::new(on_close_picker.clone())
                                             />
                                         }.into_any()
