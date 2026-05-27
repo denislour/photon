@@ -3,45 +3,17 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use crate::i18n::*;
-use crate::utils::api::{self, MediaItem};
+use crate::utils::api::{self, Album, MediaItem};
 use crate::utils::icons;
-
-fn is_faved(id: &str) -> bool {
-    web_sys::window()
-        .and_then(|w| w.local_storage().ok().flatten())
-        .and_then(|s| s.get_item("photon_favs").ok())
-        .flatten()
-        .map(|v| v.contains(id))
-        .unwrap_or(false)
-}
-
-fn toggle_fav(id: &str) {
-    let storage = web_sys::window().and_then(|w| w.local_storage().ok().flatten());
-    if let Some(s) = storage {
-        let current = s.get_item("photon_favs").ok().flatten().unwrap_or_default();
-        let next = if current.contains(id) {
-            current
-                .replace(id, "")
-                .replace(",,", ",")
-                .trim_matches(',')
-                .to_string()
-        } else {
-            let mut r = current;
-            if !r.is_empty() {
-                r.push(',');
-            }
-            r.push_str(id);
-            r
-        };
-        let _ = s.set_item("photon_favs", &next);
-    }
-}
+use crate::utils::storage;
 
 #[allow(non_snake_case)]
 #[component]
 pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl IntoView {
     let toast = use_context::<RwSignal<String>>();
     let close = move || index.set(None);
+    let show_album_picker = RwSignal::new(false);
+    let albums = RwSignal::new(Vec::<Album>::new());
 
     view! {
         {move || {
@@ -95,25 +67,29 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                         <span class="text-ink font-medium text-sm">{item.original_name.clone()}</span>
                                         <span class="text-mute text-xs">{item.created_at.clone()}</span>
                                     </div>
-                                    <div class="flex gap-4 pb-1">
+                                    <div class="flex gap-4 pb-1 items-center">
                                         {let fav_id = item.id.clone();
                                         let fav_display = fav_id.clone();
                                         view! {
                                             <button on:click=move |_| {
-                                                    toggle_fav(&fav_id);
-                                                    if let Some(t) = toast {
-                                                        let msg = if is_faved(&fav_id) { "Da luu" } else { "Da bo luu" };
-                                                        t.set(msg.into());
-                                                        let t2 = t;
-                                                        spawn_local(async move {
-                                                            TimeoutFuture::new(3000).await;
-                                                            t2.set(String::new());
-                                                        });
-                                                    }
+                                                storage::toggle_fav(&fav_id);
+                                                if let Some(t) = toast {
+                                                    let msg = if storage::is_faved(&fav_id) {
+                                                        tr(I18nKey::FavSaved)
+                                                    } else {
+                                                        tr(I18nKey::FavUnsaved)
+                                                    };
+                                                    t.set(msg.into());
+                                                    let t2 = t;
+                                                    spawn_local(async move {
+                                                        TimeoutFuture::new(3000).await;
+                                                        t2.set(String::new());
+                                                    });
                                                 }
+                                            }
                                                 class="bg-none border-none cursor-pointer text-sm \
                                                        flex items-center gap-1 transition-opacity">
-                                                {if is_faved(&fav_display) { "★" } else { "☆" }}
+                                                {if storage::is_faved(&fav_display) { "★" } else { "☆" }}
                                             </button>
                                         }}
                                         <button on:click=move |_| {
@@ -130,6 +106,78 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                             text-sm flex items-center gap-1 hover:opacity-100 transition-opacity">
                                             {tr(I18nKey::ModalDelete)}
                                         </button>
+                                        <div class="relative">
+                                            <button on:click=move |_| {
+                                                show_album_picker.set(!show_album_picker.get());
+                                                if show_album_picker.get() {
+                                                    spawn_local(async move {
+                                                        if let Ok(list) = api::fetch_albums().await {
+                                                            albums.set(list);
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                                class="bg-none border-none text-xs text-body cursor-pointer \
+                                                       flex items-center gap-1 hover:text-ink transition-colors">
+                                                <span inner_html=icons::FOLDER />
+                                                {tr(I18nKey::AddToAlbum)}
+                                            </button>
+                                            {move || show_album_picker.get().then(|| {
+                                                let album_list = albums.get();
+                                                view! {
+                                                    <div class="absolute bottom-full mb-1 left-0 bg-surf3 border border-hl2 \
+                                                                rounded-sm shadow-xl min-w-[160px] max-h-[180px] overflow-y-auto z-20">
+                                                        {album_list.into_iter().map(|album| {
+                                                            let album_id = album.id.clone();
+                                                            let album_name = album.name.clone();
+                                                            let media_id = item.id.clone();
+                                                            let media_name = item.original_name.clone();
+                                                            let display_name = album_name.clone();
+                                                            let _ = media_name;
+                                                            view! {
+                                                                <button on:click=move |_| {
+                                                                    let aid = album_id.clone();
+                                                                    let mid = media_id.clone();
+                                                                    let aname = album_name.clone();
+                                                                    let mname = media_name.clone();
+                                                                    spawn_local(async move {
+                                                                        match api::assign_media_to_album(&mid, &aid).await {
+                                                                            Ok(_) => {
+                                                                                if let Some(t) = toast {
+                                                                                    t.set(format!("{} \"{}\" -> \"{}\"", tr(I18nKey::AddedToAlbum), mname, aname));
+                                                                                    let t2 = t;
+                                                                                    spawn_local(async move {
+                                                                                        TimeoutFuture::new(3000).await;
+                                                                                        t2.set(String::new());
+                                                                                    });
+                                                                                }
+                                                                            }
+                                                                            Err(e) => {
+                                                                                if let Some(t) = toast {
+                                                                                    t.set(format!("{}: {e}", tr(I18nKey::UploadError)));
+                                                                                    let t2 = t;
+                                                                                    spawn_local(async move {
+                                                                                        TimeoutFuture::new(4000).await;
+                                                                                        t2.set(String::new());
+                                                                                    });
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                    show_album_picker.set(false);
+                                                                }
+                                                                    class="w-full text-left px-3 py-2 text-sm text-body \
+                                                                           hover:text-ink hover:bg-surf2 transition-colors \
+                                                                           border-b border-hl last:border-b-0 flex items-center gap-2">
+                                                                    <span class="w-4 h-4 flex items-center justify-center text-gold/50" inner_html=icons::FOLDER />
+                                                                    {display_name}
+                                                                </button>
+                                                            }
+                                                        }).collect::<Vec<_>>()}
+                                                    </div>
+                                                }.into_any()
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
 
