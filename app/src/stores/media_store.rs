@@ -7,6 +7,7 @@ pub struct MediaStore {
     items: RwSignal<Vec<MediaItem>>,
     filter: RwSignal<String>,
     search_query: RwSignal<String>,
+    selected: RwSignal<Option<usize>>,
 }
 
 impl MediaStore {
@@ -15,6 +16,7 @@ impl MediaStore {
             items: RwSignal::new(vec![]),
             filter: RwSignal::new("all".into()),
             search_query: RwSignal::new(String::new()),
+            selected: RwSignal::new(None),
         }
     }
 
@@ -36,6 +38,14 @@ impl MediaStore {
 
     pub fn search_query(&self) -> RwSignal<String> {
         self.search_query
+    }
+
+    pub fn selected(&self) -> RwSignal<Option<usize>> {
+        self.selected
+    }
+
+    pub fn set_selected(&self, v: Option<usize>) {
+        self.selected.set(v);
     }
 
     pub fn set_search_query(&self, q: &str) {

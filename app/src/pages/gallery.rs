@@ -43,7 +43,6 @@ const LIST_COL: &str = "flex flex-col gap-2";
 pub fn GalleryPage() -> impl IntoView {
     let AppCtx { app, media, .. } = expect_context();
     let upload = expect_context::<UploadStore>();
-    let selected = RwSignal::new(None::<usize>);
 
     Effect::new(move |_| {
         if upload.on_upload().get() {
@@ -66,18 +65,18 @@ pub fn GalleryPage() -> impl IntoView {
     }
 
     let on_keydown = move |ev: leptos::ev::KeyboardEvent| match ev.key().as_str() {
-        "Escape" => selected.set(None),
+        "Escape" => media.set_selected(None),
         "ArrowLeft" => {
-            if let Some(idx) = selected.get() {
+            if let Some(idx) = media.selected().get() {
                 if idx > 0 {
-                    selected.set(Some(idx - 1));
+                    media.set_selected(Some(idx - 1));
                 }
             }
         }
         "ArrowRight" => {
-            if let Some(idx) = selected.get() {
+            if let Some(idx) = media.selected().get() {
                 if idx + 1 < media.items().get().len() {
-                    selected.set(Some(idx + 1));
+                    media.set_selected(Some(idx + 1));
                 }
             }
         }
@@ -158,7 +157,7 @@ pub fn GalleryPage() -> impl IntoView {
                                     let gi = gi;
                                     view! {
                                         <div class=GRID_CARD
-                                            on:click=move |_| selected.set(Some(gi))>
+                                            on:click=move |_| media.set_selected(Some(gi))>
                                             <div class=GRID_PREVIEW>
                                                 {if item.mime_type.starts_with("video") {
                                                     view! { <span class=PLAY_ICON inner_html=icons::PLAY /> }.into_any()
@@ -174,7 +173,7 @@ pub fn GalleryPage() -> impl IntoView {
                                     }
                                 }).collect_view()}
                             </div>
-                            <PhotoModal items=all_items.clone() index=selected />
+                            <PhotoModal items=all_items.clone() index=media.selected() />
                         </>
                     }.into_any()
                 } else {
@@ -185,7 +184,7 @@ pub fn GalleryPage() -> impl IntoView {
                                     let gi = gi;
                                     view! {
                                         <div class=LIST_ROW
-                                            on:click=move |_| selected.set(Some(gi))>
+                                            on:click=move |_| media.set_selected(Some(gi))>
                                             <div class=LIST_PREVIEW>
                                                 {if item.mime_type.starts_with("video") {
                                                     view! { <span class=PLAY_ICON inner_html=icons::PLAY /> }.into_any()
@@ -202,7 +201,7 @@ pub fn GalleryPage() -> impl IntoView {
                                     }
                                 }).collect_view()}
                             </div>
-                            <PhotoModal items=all_items.clone() index=selected />
+                            <PhotoModal items=all_items.clone() index=media.selected() />
                         </>
                     }.into_any()
                 }

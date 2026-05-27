@@ -39,14 +39,54 @@ app/src/
 
 ## Key Patterns
 
-### Code Style
+### Strict Rules — MUST follow, NO exceptions
 
-- **No comments in code**: Use clear function/variable names, extract helpers, and keep components small. Code should be self-documenting.
-- Extract long Tailwind class strings (>80 chars) into `const` variables at top of file.
-- Extract complex event handlers as named closures before the `view!` block.
-- Extract repeated HTML patterns into sub-components.
-- Use `.collect_view()` instead of `.collect::<Vec<_>>()`.
-- **Use Rust captured identifiers** in `format!()` instead of positional arguments: `format!("{name} is {age}")` instead of `format!("{} is {}", name, age)`.
+#### 1. No comments in code
+
+- Write self-documenting code: clear function/variable names, extract helpers, small components.
+- Zero `//` or `///` comments allowed in source files.
+
+#### 2. All class strings as constants
+
+- Every `class="..."` must be a `const` variable at top of file — **regardless of length**.
+- Name in `UPPER_SNAKE_CASE`. Use `class=CONST_NAME` syntax.
+- Even single-word classes like `class="relative"` must be extracted.
+
+#### 3. All state must be in stores
+
+- Every `RwSignal` must live inside a store struct.
+- Zero local `RwSignal::new(...)` in components or pages.
+- Store pattern: **State** (fields) → **Getter** (methods returning signal) → **Setter** (mutation methods).
+- Load/store data via `expect_context::<StoreType>()`.
+
+#### 4. Toast via ToastStore
+
+- Use `toast.show(msg, ms)` — NEVER inline `spawn_local` + `TimeoutFuture`.
+- ToastStore is provided globally, access via `expect_context::<ToastStore>()`.
+
+#### 5. All user-facing strings via i18n
+
+- Use `tr(I18nKey::*)` — NO hardcoded strings anywhere.
+- Add new keys to `I18nKey` enum + `tr()` match.
+
+#### 6. Use Rust captured identifiers in `format!()`
+
+- `format!("{name} is {age}")` — NEVER `format!("{} is {}", name, age)`.
+- If the value is an expression, bind to a variable first.
+
+#### 7. Use `.collect_view()`
+
+- Use `.collect_view()` — NEVER `collect::<Vec<_>>()`.
+
+#### 8. Extract event handlers before `view!`
+
+- Define complex closures as named variables BEFORE the `view!` block.
+- Pass as `on:click=handler`, NOT inline in the HTML.
+
+#### 9. Extract repeated HTML into sub-components
+
+- Any pattern used ≥2 times must be extracted into a `#[component]` function.
+- Also extract helpers returning `impl IntoView` (e.g. conditional thumbnails).
 
 ### Component Structure
 

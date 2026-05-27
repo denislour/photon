@@ -33,11 +33,25 @@ api/src/
 
 ## Key Patterns
 
-### Code Style
+### Strict Rules — MUST follow, NO exceptions
 
-- **No comments in code**: Use clear function/variable names, extract helpers, and keep functions small. Code should be self-documenting.
-- Extract long class strings (>80 chars) into `const` variables.
-- **Use Rust captured identifiers** in `format!()` instead of positional arguments: `format!("{name} is {age}")` instead of `format!("{} is {}", name, age)`.
+#### 1. No comments in code
+
+- Write self-documenting code: clear function/variable names, extract helpers, small functions.
+- Zero `//` or `///` comments allowed in source files.
+
+#### 2. Use Rust captured identifiers in `format!()`
+
+- `format!("{name} is {age}")` — NEVER `format!("{} is {}", name, age)`.
+- If the value is an expression, bind to a variable first: `let n = expr; format!("{n}")`.
+
+#### 3. Route return types by HTTP method
+
+- GET: `Result<Json<Value>, AppError>`
+- POST: `Result<(StatusCode, Json<Value>), AppError>` (201 Created)
+- PUT/PATCH: `Result<Json<Value>, AppError>`
+- DELETE: `Result<StatusCode, AppError>` (204 No Content)
+- Binary: `Result<Response<Body>, AppError>`
 
 ### Route Handlers
 
