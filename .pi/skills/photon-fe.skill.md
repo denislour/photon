@@ -19,17 +19,20 @@ app/src/
 ├── components/
 │   ├── mod.rs
 │   ├── header.rs        # Navigation bar / app header
-│   ├── modal.rs         # Fullscreen / overlay modal component
-│   ├── toast.rs         # Auto-dismiss toast notification
-│   └── form.rs          # Upload / input zone component
+│   ├── modal.rs         # Fullscreen / overlay modal (lightbox/photo)
+│   ├── toast.rs         # ToastStore-based auto-dismiss notification
+│   └── form.rs          # Upload / drag-drop zone component
 ├── pages/
 │   ├── mod.rs
 │   ├── home.rs          # Main list / gallery page
-│   └── secondary.rs     # Secondary page (albums, settings, etc.)
+│   └── detail.rs        # Secondary page (detail, settings, albums)
 ├── stores/
 │   ├── mod.rs           # AppCtx struct combining all stores
 │   ├── app_store.rs     # Global app state (view mode, preferences)
-│   └── resource_store.rs # Entity-specific state (items, filters, search)
+│   ├── media_store.rs   # Entity state (items, filter, search, selected)
+│   ├── album_store.rs   # Album list state
+│   ├── upload_store.rs  # Upload progress / queue state
+│   └── toast_store.rs   # Toast message state + .show() method
 └── utils/
     ├── mod.rs
     ├── api.rs           # API client functions
@@ -94,13 +97,17 @@ app/src/
 #[allow(non_snake_case)]
 #[component]
 pub fn MyComponent() -> impl IntoView {
-    // 1. Extract context
     let ctx = expect_context::<AppCtx>();
-    // 2. Local signals / state
+    let toast = expect_context::<ToastStore>();
     let local_state = RwSignal::new(initial);
-    // 3. Effects / async spawns
-    // 4. Event handlers (on:click, on:input, etc.)
-    // 5. view! macro
+    let handle_click = move |_| {
+        toast.show("hello", 2000);
+    };
+    view! {
+        <div class=CONTAINER on:click=handle_click>
+            {children}
+        </div>
+    }
 }
 ```
 
@@ -109,30 +116,51 @@ pub fn MyComponent() -> impl IntoView {
 - `AppCtx` is provided at router level, bundles all store structs
 - Each store is a `Copy` struct holding `RwSignal<T>` fields
 - Derived state uses `Memo` (e.g. filtered list from items + filter + search)
-- Toast: `RwSignal<String>` provided as context at app root
+- Every store gets its own file. Named re-export in `mod.rs`: `mod foo; pub use foo::Foo;`
 
 ```rust
 #[derive(Clone, Copy)]
 pub struct AppCtx {
     pub app: AppStore,
-    pub resource: ResourceStore,
+    pub media: MediaStore,
+    pub album: AlbumStore,
+    pub upload: UploadStore,
+    pub toast: ToastStore,
 }
 ```
 
-### Toast Pattern
+### ToastStore Pattern
 
 ```rust
-if let Some(t) = toast {
-    t.set("message".into());
-    let t2 = t;
-    spawn_local(async move {
-        gloo_timers::future::TimeoutFuture::new(3000).await;
-        t2.set(String::new());
-    });
+#[derive(Clone, Copy)]
+pub struct ToastStore {
+    message: RwSignal<String>,
+    visible: RwSignal<bool>,
 }
-```
 
-Use `gloo_timers::future::TimeoutFuture` for toast auto-dismiss, **not** `set_timeout` from Leptos.
+impl ToastStore {
+    pub fn new() -> Self { /* ... */ }
+
+    pub fn show(&self, msg: &str, duration_ms: u32) {
+        self.message.set(msg.to_string());
+        self.visible.set(true);
+        let msg = self.message;
+        let vis = self.visible;
+        spawn_local(async move {
+            TimeoutFuture::new(duration_ms).await;
+            msg.set(String::new());
+            vis.set(false);
+        });
+    }
+
+    pub fn message(&self) -> ReadSignal<String> { self.message.read_only() }
+    pub fn visible(&self) -> ReadSignal<bool> { self.visible.read_only() }
+}
+
+// In component:
+let toast = expect_context::<ToastStore>();
+toast.show("uploaded!", 3000);
+```
 
 ### API Calls
 
@@ -151,18 +179,20 @@ Use `gloo_timers::future::TimeoutFuture` for toast auto-dismiss, **not** `set_ti
 ### i18n (Internationalization)
 
 - All user-facing strings must use `tr(I18nKey::*)` — no hardcoded strings
-- Dynamic messages: `format!("{} {}", tr(I18nKey::SomeKey), dynamic_part)`
+- Dynamic messages: `format!("{} {name}", tr(I18nKey::SomeKey), name=val)` — with captured identifiers
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum I18nKey {
     AppTitle,
+    UploadComplete,
     // ... all keys
 }
 
 pub fn tr(key: I18nKey) -> &'static str {
     match key {
         I18nKey::AppTitle => "...",
+        I18nKey::UploadComplete => "uploaded",
     }
 }
 ```
@@ -173,6 +203,20 @@ pub fn tr(key: I18nKey) -> &'static str {
 - Group colors by role (background, text, accent, border, muted)
 - Use Tailwind v3 syntax: `@tailwind base/components/utilities`, no `@import "tailwindcss"`, no `@theme`
 - Class variants: `class:border-gold=is_active` for conditional styling
+- `app.css`: only 3 lines (`@tailwind base; @tailwind components; @tailwind utilities;`)
+- Example theme colors:
+  ```js
+  // tailwind.config.js
+  theme: { extend: { colors: {
+    navy: "#13161f",   // bg primary
+    ink: "#e8e6e0",   // text primary
+    mute: "#8a8780",  // text secondary
+    body: "#a8a49e",  // text body
+    gold: "#f2992e",  // accent
+    surf: "#1a1e2a",  // surface card
+    hl: "rgb(255 255 255 / 0.06)", // hover highlight
+  }}}
+  ```
 
 ### Icons
 
@@ -183,9 +227,130 @@ pub fn tr(key: I18nKey) -> &'static str {
 
 ```rust
 <Routes fallback=|| view! { "404" }>
-    <Route path=path!("") view=HomePage />
-    <Route path=path!("secondary") view=SecondaryPage />
+    <Route path=path!("") view=GalleryPage />
+    <Route path=path!("detail") view=DetailPage />
 </Routes>
+```
+
+### Modal / Lightbox Pattern
+
+```rust
+#[derive(Clone, Copy)]
+pub struct MediaStore {
+    items: RwSignal<Vec<MediaItem>>,
+    selected: RwSignal<Option<usize>>,
+    // ...
+}
+
+impl MediaStore {
+    pub fn open_modal(&self, index: usize) {
+        self.selected.set(Some(index));
+    }
+    pub fn close_modal(&self) {
+        self.selected.set(None);
+    }
+}
+
+// In modal component:
+let store = expect_context::<MediaStore>();
+let is_open = move || store.selected().get().is_some();
+let close = move |_| store.close_modal();
+view! {
+    <Show when=is_open>
+        <div class=OVERLAY on:click=close>
+            <img src={move || format!("/api/media/{}", idx)} />
+            <button on:click=close class=CLOSE_BTN>
+                <span inner_html=icons::CLOSE />
+            </button>
+        </div>
+    </Show>
+}
+```
+
+### Upload Store Pattern
+
+```rust
+#[derive(Clone, Copy)]
+pub struct UploadStore {
+    uploading: RwSignal<bool>,
+    progress: RwSignal<u8>, // 0-100 percent
+}
+
+impl UploadStore {
+    pub async fn upload(&self, file: &web_sys::File) -> Result<String, String> {
+        self.uploading.set(true);
+        // Use web_sys::FormData + JsFuture to POST multipart
+        let form = web_sys::FormData::new().unwrap();
+        form.append_with_blob("file", file).unwrap();
+        let url = api_url("/api/media");
+        let mut opts = RequestInit::new();
+        opts.method("POST");
+        opts.body(Some(&form.into()));
+        let request = Request::new_with_str_and_init(&url, &opts).unwrap();
+        let resp = JsFuture::from(window.fetch_with_request(&request)).await?;
+        // parse response
+        self.uploading.set(false);
+        Ok(id)
+    }
+}
+```
+
+### Pagination / Infinite Scroll Pattern
+
+```rust
+// In page component
+let store = expect_context::<MediaStore>();
+let page = RwSignal::new(0);
+let loading = RwSignal::new(false);
+let has_more = RwSignal::new(true);
+
+let load_more = move |_| {
+    if loading.get() || !has_more.get() { return; }
+    loading.set(true);
+    let p = page.get();
+    spawn_local(async move {
+        match api::list_media(p, 50).await {
+            Ok(mut items) => {
+                store.items().update(|old| old.append(&mut items));
+                page.set(p + 1);
+                has_more.set(items.len() == 50);
+            }
+            Err(e) => toast.show(&e, 3000),
+        }
+        loading.set(false);
+    });
+};
+
+// scroll sentinel
+view! {
+    <div on:click=load_more>
+        {move || loading.get().then(|| view! { <p>"loading..."</p> })}
+    </div>
+}
+```
+
+### Album Store Pattern
+
+```rust
+#[derive(Clone, Copy)]
+pub struct AlbumStore {
+    items: RwSignal<Vec<Album>>,
+    selected: RwSignal<Option<String>>, // album_id
+}
+
+impl AlbumStore {
+    pub fn set_items(&self, items: Vec<Album>) { self.items.set(items); }
+    pub fn items(&self) -> RwSignal<Vec<Album>> { self.items }
+    pub fn selected_id(&self) -> RwSignal<Option<String>> { self.selected }
+
+    pub fn load(&self) {
+        spawn_local(async move {
+            if let Ok(albums) = api::list_albums().await {
+                self.items.set(albums);
+            }
+        });
+    }
+}
 ```
 
 ### Store Pattern
@@ -217,22 +382,30 @@ impl ResourceStore {
 ## Adding a New Page
 
 1. Create `pages/my_page.rs` with `#[component] pub fn MyPage()`
-2. Export in `pages/mod.rs`
+2. Named export in `pages/mod.rs`: `mod my_page; pub use my_page::MyPage;`
 3. Add route in `app.rs`
 4. Add navigation link in `header.rs`
 5. Add i18n keys in `i18n.rs` if needed
+
+## Adding a New Store
+
+1. Create `stores/new_store.rs`:
+   - Define `#[derive(Clone, Copy)] pub struct NewStore { field: RwSignal<T> }`
+   - `pub fn new()` + getters + setters
+2. Named export in `stores/mod.rs`: `mod new_store; pub use new_store::NewStore;`
+3. Add field to `AppCtx` + init in `app.rs`
 
 ## Adding a New API Call
 
 1. Add request/response structs in `utils/api.rs`
 2. Add async function returning `Result<T, String>`
 3. Call with `spawn_local` in component
-4. Handle loading/error states
+4. Handle loading/error states via toast
 
 ## Adding a New Utility
 
 1. Create `utils/my_util.rs` with pub functions
-2. Export in `utils/mod.rs`
+2. Named export in `utils/mod.rs`
 
 ## Router + Provider Setup (app.rs)
 
@@ -240,12 +413,19 @@ impl ResourceStore {
 #[allow(non_snake_case)]
 #[component]
 pub fn App() -> impl IntoView {
-    let ctx = AppCtx {
-        app: AppStore::new(),
-        resource: ResourceStore::new(),
-    };
+    let app = AppStore::new();
+    let media = MediaStore::new();
+    let album = AlbumStore::new();
+    let upload = UploadStore::new();
+    let toast = ToastStore::new();
+    let ctx = AppCtx { app, media, album, upload, toast };
+
+    // Provide individually so components can grab only what they need
     provide_context(ctx);
-    let toast: RwSignal<String> = RwSignal::new(String::new());
+    provide_context(app);
+    provide_context(media);
+    provide_context(album);
+    provide_context(upload);
     provide_context(toast);
 
     view! {
@@ -253,11 +433,11 @@ pub fn App() -> impl IntoView {
             <Header />
             <main>
                 <Routes fallback=|| view! { "404" }>
-                    <Route path=path!("") view=HomePage />
-                    <Route path=path!("secondary") view=SecondaryPage />
+                    <Route path=path!("") view=GalleryPage />
+                    <Route path=path!("albums") view=AlbumsPage />
                 </Routes>
             </main>
-            <Toast message=toast />
+            <Toast />
         </Router>
     }
 }
