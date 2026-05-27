@@ -139,6 +139,34 @@ pub async fn get_r2(storage: &Bucket, key: &str) -> Result<Option<Vec<u8>>, AppE
     }
 }
 
+pub async fn assign_album(db: &D1Database, media_id: &str, album_id: &str) -> Result<(), AppError> {
+    let album_exists = db
+        .prepare("SELECT COUNT(*) as count FROM albums WHERE id = ?1")
+        .bind(&[album_id.into()])?
+        .run()
+        .await?;
+
+    if album_exists.results::<serde_json::Value>()?.is_empty() {
+        return Err(AppError::NotFound);
+    }
+
+    db.prepare("UPDATE media SET album_id = ?1 WHERE id = ?2")
+        .bind(&[album_id.into(), media_id.into()])?
+        .run()
+        .await?;
+
+    Ok(())
+}
+
+pub async fn remove_from_album(db: &D1Database, media_id: &str) -> Result<(), AppError> {
+    db.prepare("UPDATE media SET album_id = NULL WHERE id = ?1")
+        .bind(&[media_id.into()])?
+        .run()
+        .await?;
+
+    Ok(())
+}
+
 pub async fn delete_r2(storage: &Bucket, key: &str) -> Result<(), AppError> {
     storage.delete(key).await?;
     Ok(())

@@ -20,3 +20,8 @@ pub struct ListParams {
     pub offset: Option<u32>,
     pub album_id: Option<String>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct AssignAlbum {
+    pub album_id: String,
+}

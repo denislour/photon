@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     Router,
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
 };
 use tower_http::cors::CorsLayer;
 use tower_service::Service;
@@ -56,6 +56,8 @@ async fn fetch(
         .route("/api/media", get(media::route::list))
         .route("/api/media/{id}", get(media::route::serve))
         .route("/api/media/{id}", delete(media::route::delete))
+        .route("/api/media/{id}/album", put(media::route::assign_album))
+        .route("/api/media/{id}/album", delete(media::route::remove_album))
         .route("/api/albums", post(albums::route::create))
         .route("/api/albums", get(albums::route::list))
         .route("/api/albums/{id}", get(albums::route::get))
