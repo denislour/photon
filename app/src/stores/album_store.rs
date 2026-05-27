@@ -7,6 +7,7 @@ use crate::utils::api;
 pub struct AlbumStore {
     items: RwSignal<Vec<api::Album>>,
     show_modal: RwSignal<bool>,
+    show_picker: RwSignal<bool>,
     new_name: RwSignal<String>,
 }
 
@@ -15,6 +16,7 @@ impl AlbumStore {
         Self {
             items: RwSignal::new(vec![]),
             show_modal: RwSignal::new(false),
+            show_picker: RwSignal::new(false),
             new_name: RwSignal::new(String::new()),
         }
     }
@@ -29,6 +31,14 @@ impl AlbumStore {
 
     pub fn new_name(&self) -> RwSignal<String> {
         self.new_name
+    }
+
+    pub fn show_picker(&self) -> RwSignal<bool> {
+        self.show_picker
+    }
+
+    pub fn set_show_picker(&self, v: bool) {
+        self.show_picker.set(v);
     }
 
     pub fn load(&self) {

@@ -145,10 +145,9 @@ fn AlbumPickerModal(
 pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl IntoView {
     let album_store = expect_context::<AlbumStore>();
     let toast = expect_context::<ToastStore>();
-    let show_picker = RwSignal::new(false);
 
     let close = move || {
-        show_picker.set(false);
+        album_store.set_show_picker(false);
         index.set(None);
     };
 
@@ -159,8 +158,9 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
     };
 
     let _toggle_picker = move |_media_item: &MediaItem| {
-        show_picker.set(!show_picker.get());
-        if show_picker.get() {
+        let v = !album_store.show_picker().get();
+        album_store.set_show_picker(v);
+        if v {
             album_store.load();
         }
     };
@@ -193,16 +193,14 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
             };
 
             let on_picker_toggle = move |_| {
-                show_picker.set(!show_picker.get());
-                if show_picker.get() {
+                let v = !album_store.show_picker().get();
+                album_store.set_show_picker(v);
+                if v {
                     album_store.load();
                 }
             };
 
-            let on_close_picker = {
-                let sp = show_picker;
-                move || sp.set(false)
-            };
+            let on_close_picker = move || album_store.set_show_picker(false);
 
             Some(view! {
                 <div class=OVERLAY on:click=on_overlay>
@@ -251,7 +249,7 @@ pub fn PhotoModal(items: Vec<MediaItem>, index: RwSignal<Option<usize>>) -> impl
                                         <span inner_html=icons::FOLDER />
                                         {tr(I18nKey::AddToAlbum)}
                                     </button>
-                                    {move || show_picker.get().then(|| {
+                                    {move || album_store.show_picker().get().then(|| {
                                         let al = album_store.items().get();
                                         let mid = item.id.clone();
                                         let mn = item.original_name.clone();
