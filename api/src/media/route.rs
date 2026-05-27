@@ -4,11 +4,10 @@ use axum::{
     Json,
     extract::{Multipart, Path, Query, State},
     http::StatusCode,
-    response::IntoResponse,
 };
-use serde_json::json;
+use serde_json::{Value, json};
 
-use super::model::{ListParams, Media};
+use super::model::{AssignAlbum, ListParams, Media};
 use super::service;
 use crate::AppState;
 use crate::error::AppError;
@@ -17,7 +16,7 @@ use crate::error::AppError;
 pub async fn upload(
     State(state): State<AppState>,
     mut multipart: Multipart,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<(StatusCode, Json<Value>), AppError> {
     let mut file_data: Option<Vec<u8>> = None;
     let mut file_name = String::from("unknown");
     let mut file_mime = String::from("application/octet-stream");
@@ -83,7 +82,7 @@ pub async fn upload(
 pub async fn list(
     State(state): State<AppState>,
     Query(params): Query<ListParams>,
-) -> Result<Json<serde_json::Value>, AppError> {
+) -> Result<Json<Value>, AppError> {
     let limit = params.limit.unwrap_or(50).min(200);
     let offset = params.offset.unwrap_or(0);
     let items = service::list(&state.db.0, limit, offset, params.album_id).await?;
@@ -120,10 +119,29 @@ pub async fn serve(
 pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<StatusCode, AppError> {
     let bucket_path = service::delete(&state.db.0, &id)
         .await?
         .ok_or(AppError::NotFound)?;
     service::delete_r2(&state.storage.0, &bucket_path).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[worker::send]
+pub async fn assign_album(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(body): Json<AssignAlbum>,
+) -> Result<Json<Value>, AppError> {
+    service::assign_album(&state.db.0, &id, &body.album_id).await?;
+    Ok(Json(json!({"status": "ok"})))
+}
+
+#[worker::send]
+pub async fn remove_album(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Result<StatusCode, AppError> {
+    service::remove_from_album(&state.db.0, &id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
