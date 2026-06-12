@@ -55,14 +55,14 @@ pub fn GalleryPage() -> impl IntoView {
         }
     });
 
-    {
-        let m = media;
-        spawn_local(async move {
+    Resource::new(
+        || (),
+        move |_| async move {
             if let Ok(items) = api::fetch_media().await {
-                m.set_items(items);
+                media.set_items(items);
             }
-        });
-    }
+        },
+    );
 
     let on_keydown = move |ev: leptos::ev::KeyboardEvent| match ev.key().as_str() {
         "Escape" => media.set_selected(None),
