@@ -37,6 +37,13 @@ pub fn AlbumsPage() -> impl IntoView {
     let album = expect_context::<AlbumStore>();
     let toast = expect_context::<ToastStore>();
 
+    Resource::new(
+        || (),
+        move |_| async move {
+            album.load();
+        },
+    );
+
     let create = move || {
         let name = album.new_name().get();
         if name.trim().is_empty() {
